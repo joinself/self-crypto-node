@@ -1,0 +1,22 @@
+{
+  "name": "self-crypto",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "node-gyp-build": "^3.3.0"
+  },
+  "devDependencies": {
+    "prebuildify": "^2.6.0",
+    "standard": "^11.0.1",
+    "tape": "^4.9.0"
+  },
+  "scripts": {
+    "install": "node-gyp-build",
+    "test": "standard && tape test.js",
+    "prebuild": "prebuildify --napi"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mafintosh/a-napi-example.git"
+  }
+} 
