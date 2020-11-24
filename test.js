@@ -1,3 +1,7 @@
 var self_crypto = require('./')
 
-self_crypto.print('hello world')
+var account = self_crypto.create_olm_account();
+console.log(account);
+
+self_crypto.create_account_prekeys(account, 1);
+
