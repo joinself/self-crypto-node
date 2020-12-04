@@ -1,3 +1,5 @@
+// Copyright 2020 Self Group Ltd. All Rights Reserved.
+
 #include <node_api.h>
 #include <stdio.h>
 #include <sodium.h>
