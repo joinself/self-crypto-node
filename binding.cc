@@ -31,6 +31,13 @@ namespace self_crypto {
       return NULL;
     }
 
+    if (sodium_init() == -1) {
+      napi_throw_error(env, "ERROR", "Sodium not ready");
+      return NULL;
+    }
+
+    randombytes_buf(rand, rlen);
+
     if (olm_create_account(account, rand, rlen) != 0) {
       napi_throw_error(env, "ERROR", "Could not create olm account");
       return NULL;
@@ -49,7 +56,7 @@ namespace self_crypto {
     return aref;
   }
 
-  napi_value create_account_prekeys(napi_env env, napi_callback_info info) {
+  napi_value create_account_one_time_keys(napi_env env, napi_callback_info info) {
     napi_value argv[2];
     size_t argc = 2;
 
@@ -75,7 +82,7 @@ namespace self_crypto {
       return NULL;
     }
 
-    OlmAccount *account = olm_account(aref);
+    OlmAccount *account = (OlmAccount*)(aref);
 
     size_t rlen = olm_account_generate_one_time_keys_random_length(account, num_keys);
 
@@ -86,25 +93,82 @@ namespace self_crypto {
       return NULL;
     }
 
-    if (olm_account_generate_one_time_keys(account, num_keys, rand, rlen) != 0) {
+    if (sodium_init() == -1) {
+      napi_throw_error(env, "ERROR", "Sodium not ready");
+      return NULL;
+    }
+
+    randombytes_buf(rand, rlen);
+
+    if (olm_account_generate_one_time_keys(account, num_keys, rand, rlen) != (size_t)(num_keys)) {
       napi_throw_error(env, "ERROR", olm_account_last_error(account));
       return NULL;
     }
-    
+
     return NULL;
+  }
+
+  napi_value one_time_keys(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[1];
+    size_t argc = 1;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *aref;
+
+    napi_status status = napi_get_value_external(env, argv[0], &aref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Account");
+      return NULL;
+    }
+
+    OlmAccount *account = (OlmAccount*)(aref);
+
+    size_t klen = olm_account_one_time_keys_length(account);
+
+    void *keys = malloc(klen); 
+
+    if (keys == NULL){
+      napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
+      return NULL;
+    }
+
+    klen = olm_account_one_time_keys(account, keys, klen);
+
+    if (klen < 1) {
+      napi_throw_error(env, "ERROR", olm_account_last_error(account));
+      return NULL;
+    }
+
+    status = napi_create_string_utf8(env, (const char*)(keys), klen, &result);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Account");
+      return NULL;
+    }
+
+    return result;
   }
 
 
   napi_value init_all (napi_env env, napi_value exports) {
-    napi_value olm_create_account_fn;
-    napi_value create_account_prekeys_fn;
+    napi_value create_account_fn;
+    napi_value create_account_one_time_keys_fn;
+    napi_value one_time_keys_fn;
 
-    napi_create_function(env, NULL, 0, create_olm_account, NULL, &olm_create_account_fn);
-    napi_set_named_property(env, exports, "create_olm_account", olm_create_account_fn);
+    napi_create_function(env, NULL, 0, create_olm_account, NULL, &create_account_fn);
+    napi_set_named_property(env, exports, "create_olm_account", create_account_fn);
     
-    napi_create_function(env, NULL, 0, create_account_prekeys, NULL, &create_account_prekeys_fn);
-    napi_set_named_property(env, exports, "create_account_prekeys", create_account_prekeys_fn);
+    napi_create_function(env, NULL, 0, create_account_one_time_keys, NULL, &create_account_one_time_keys_fn);
+    napi_set_named_property(env, exports, "create_account_one_time_keys", create_account_one_time_keys_fn);
     
+    napi_create_function(env, NULL, 0, one_time_keys, NULL, &one_time_keys_fn);
+    napi_set_named_property(env, exports, "one_time_keys", one_time_keys_fn);
 
     return exports;
   }
