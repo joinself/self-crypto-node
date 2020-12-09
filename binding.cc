@@ -148,7 +148,54 @@ namespace self_crypto {
 
     status = napi_create_string_utf8(env, (const char*)(keys), klen, &result);
     if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Account Keys");
+      return NULL;
+    }
+
+    return result;
+  }
+
+  napi_value identity_keys(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[1];
+    size_t argc = 1;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *aref;
+
+    napi_status status = napi_get_value_external(env, argv[0], &aref);
+    if (status != napi_ok) {
       napi_throw_error(env, "ERROR", "Invalid Olm Account");
+      return NULL;
+    }
+
+    OlmAccount *account = (OlmAccount*)(aref);
+
+    size_t klen = olm_account_identity_keys_length(account);
+
+    void *keys = malloc(klen); 
+
+    if (keys == NULL){
+      napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
+      return NULL;
+    }
+
+    klen = olm_account_identity_keys(account, keys, klen);
+
+    if (klen < 1) {
+      napi_throw_error(env, "ERROR", olm_account_last_error(account));
+      return NULL;
+    }
+
+    status = napi_create_string_utf8(env, (const char*)(keys), klen, &result);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Account Keys");
       return NULL;
     }
 
@@ -160,6 +207,7 @@ namespace self_crypto {
     napi_value create_account_fn;
     napi_value create_account_one_time_keys_fn;
     napi_value one_time_keys_fn;
+    napi_value identity_keys_fn;
 
     napi_create_function(env, NULL, 0, create_olm_account, NULL, &create_account_fn);
     napi_set_named_property(env, exports, "create_olm_account", create_account_fn);
@@ -169,6 +217,9 @@ namespace self_crypto {
     
     napi_create_function(env, NULL, 0, one_time_keys, NULL, &one_time_keys_fn);
     napi_set_named_property(env, exports, "one_time_keys", one_time_keys_fn);
+
+    napi_create_function(env, NULL, 0, identity_keys, NULL, &identity_keys_fn);
+    napi_set_named_property(env, exports, "identity_keys", identity_keys_fn);
 
     return exports;
   }
