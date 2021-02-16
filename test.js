@@ -11,3 +11,6 @@ console.log(keys);
 
 var id_keys = self_crypto.identity_keys(account);
 console.log(id_keys);
+
+var session = self_crypto.create_outbound_session(account, "gliSBuE/PavNATcg8rEcjLKRkhvQHxsZFfm3m4yBdjA", "oC+cAFahU532Bnm/NtN/nWPAln7J67eDYxt33MvEmxA");
+console.log(session);
