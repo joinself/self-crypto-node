@@ -24,3 +24,9 @@ var alice_session = self_crypto.create_inbound_session(bob_account, ciphertext_f
 var plaintext_for_bob = self_crypto.decrypt(alice_session, ciphertext_for_bob, 0);
 
 console.log(plaintext_for_bob);
+
+
+// create a group session
+
+var group_session_with_bob = self_crypto.create_group_session("alice");
+console.log(group_session_with_bob);

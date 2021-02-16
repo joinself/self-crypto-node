@@ -4,7 +4,9 @@
 #include <stdio.h>
 #include <sodium.h>
 #include <string.h>
+#include <self_omemo.h>
 #include <self_olm/olm.h>
+#include <stdlib.h>
 
 namespace self_crypto {
 
@@ -671,6 +673,49 @@ namespace self_crypto {
     return result;
   }
 
+  napi_value create_group_session(napi_env env, napi_callback_info info) {
+    napi_value argv[1];
+    size_t argc = 1;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    char *identity;
+    size_t identity_len = 0;
+
+    // get the identity
+    napi_status status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &identity_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Identity size");
+      return NULL;
+    }
+
+    identity = (char *)malloc(identity_len);
+    if (identity == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Identity buffer");
+      return NULL;
+    }
+
+    GroupSession *group_session; // = omemo_create_group_session();
+    omemo_set_identity(group_session, identity);
+
+    napi_value sref;
+
+  /*
+    status = napi_create_external(env, group_session, NULL, NULL, &sref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Could not create olm session reference");
+      return NULL;
+    }
+*/
+
+    return sref;
+  }
+
   napi_value init_all (napi_env env, napi_value exports) {
     napi_value create_account_fn;
     napi_value create_account_one_time_keys_fn;
@@ -681,6 +726,7 @@ namespace self_crypto {
     napi_value create_inbound_session_fn;
     napi_value encrypt_fn;
     napi_value decrypt_fn;
+    napi_value create_group_session_fn;
 
     napi_create_function(env, NULL, 0, create_olm_account, NULL, &create_account_fn);
     napi_set_named_property(env, exports, "create_olm_account", create_account_fn);
@@ -708,6 +754,9 @@ namespace self_crypto {
     
     napi_create_function(env, NULL, 0, decrypt, NULL, &decrypt_fn);
     napi_set_named_property(env, exports, "decrypt", decrypt_fn);
+
+    napi_create_function(env, NULL, 0, create_group_session, NULL, &create_group_session_fn);
+    napi_set_named_property(env, exports, "create_group_session", create_group_session_fn);
 
     return exports;
   }
