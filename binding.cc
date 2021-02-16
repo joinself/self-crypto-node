@@ -23,9 +23,9 @@ namespace self_crypto {
 
     OlmAccount *account = olm_account(abuf);
 
-    size_t rlen = olm_create_account_random_length(account);
+    size_t rand_len = olm_create_account_random_length(account);
 
-    void *rand = malloc(rlen); 
+    void *rand = malloc(rand_len); 
 
     if (rand == NULL){
       napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
@@ -37,9 +37,9 @@ namespace self_crypto {
       return NULL;
     }
 
-    randombytes_buf(rand, rlen);
+    randombytes_buf(rand, rand_len);
 
-    if (olm_create_account(account, rand, rlen) != 0) {
+    if (olm_create_account(account, rand, rand_len) != 0) {
       napi_throw_error(env, "ERROR", "Could not create olm account");
       return NULL;
     }
@@ -85,9 +85,9 @@ namespace self_crypto {
 
     OlmAccount *account = (OlmAccount*)(aref);
 
-    size_t rlen = olm_account_generate_one_time_keys_random_length(account, num_keys);
+    size_t rand_len = olm_account_generate_one_time_keys_random_length(account, num_keys);
 
-    void *rand = malloc(rlen); 
+    void *rand = malloc(rand_len); 
 
     if (rand == NULL){
       napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
@@ -99,9 +99,9 @@ namespace self_crypto {
       return NULL;
     }
 
-    randombytes_buf(rand, rlen);
+    randombytes_buf(rand, rand_len);
 
-    size_t ret = olm_account_generate_one_time_keys(account, num_keys, rand, rlen);
+    size_t ret = olm_account_generate_one_time_keys(account, num_keys, rand, rand_len);
 
     free(rand);
 
@@ -280,12 +280,6 @@ namespace self_crypto {
 
     OlmAccount *account = (OlmAccount*)(aref);
 
-    const char *aerr = olm_account_last_error(account);
-    if (strcmp(aerr, "SUCCESS") != 0) {
-      napi_throw_error(env, "ERROR", aerr);
-      return NULL;
-    }
-
     // get the size of the identity and one time keys
     status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &identity_key_len);
     if (status != napi_ok) {
@@ -324,6 +318,7 @@ namespace self_crypto {
       return NULL;
     }
 
+    // allocate the session
     void *sbuf = malloc(olm_session_size());
     if (sbuf == NULL){
       napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
@@ -333,9 +328,9 @@ namespace self_crypto {
 	  OlmSession *session = olm_session(sbuf);
     
     // generate some random data
-    size_t rlen = olm_create_outbound_session_random_length(session);
+    size_t rand_len = olm_create_outbound_session_random_length(session);
 
-    void *rand = malloc(rlen); 
+    void *rand = malloc(rand_len); 
     if (rand == NULL){
       napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
       return NULL;
@@ -352,7 +347,7 @@ namespace self_crypto {
       printf("%s\n", one_time_key);
     */
 
-    randombytes_buf(rand, rlen);
+    randombytes_buf(rand, rand_len);
 
     olm_create_outbound_session(
 		  session,
@@ -362,7 +357,7 @@ namespace self_crypto {
 		  one_time_key,
 		  one_time_key_len,
 		  rand,
-		  rlen
+		  rand_len
 	  );
 
     free(rand);
@@ -386,6 +381,193 @@ namespace self_crypto {
     return sref;
   }
 
+  napi_value create_inbound_session(napi_env env, napi_callback_info info) {
+    napi_value argv[2];
+    size_t argc = 2;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 2) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *aref;
+    char *ciphertext;
+    size_t ciphertext_len = 0;
+
+    napi_status status = napi_get_value_external(env, argv[0], &aref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Account");
+      return NULL;
+    }
+
+    OlmAccount *account = (OlmAccount*)(aref);
+
+    // get the size of the ciphertext one time message
+    status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &ciphertext_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Time Message Ciphertext size");
+      return NULL;
+    }
+    
+    // get the ciphertext one time message
+    ciphertext = (char *)malloc(ciphertext_len);
+    if (ciphertext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate One Time Message Ciphertext buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Identity Key");
+      return NULL;
+    }
+
+    // allocate the session
+    void *sbuf = malloc(olm_session_size());
+    if (sbuf == NULL){
+      napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
+      return NULL;
+    }
+
+	  OlmSession *session = olm_session(sbuf);
+
+    olm_create_inbound_session(
+		  session,
+		  account,
+		  ciphertext,
+		  ciphertext_len
+	  );
+    
+    free(ciphertext);
+
+    const char *serr = olm_session_last_error(session);
+    if (strcmp(serr, "SUCCESS") != 0) {
+      napi_throw_error(env, "ERROR", serr);
+      return NULL;
+    }
+
+    napi_value sref;
+
+    status = napi_create_external(env, session, NULL, NULL, &sref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Could not create olm session reference");
+      return NULL;
+    }
+
+    return sref;
+  }
+
+ napi_value encrypt(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[2];
+    size_t argc = 2;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 2) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *sref;
+    char *plaintext;
+    size_t plaintext_len = 0;
+
+    napi_status status = napi_get_value_external(env, argv[0], &sref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Session");
+      return NULL;
+    }
+
+    OlmSession *session = (OlmSession*)(sref);
+
+    // get the size of the identity and one time keys
+    status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &plaintext_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Time Message Ciphertext size");
+      return NULL;
+    }
+    
+    // get the plaintext
+    plaintext = (char *)malloc(plaintext_len);
+    if (plaintext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Plaintext buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[1], plaintext, plaintext_len, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Identity Key");
+      return NULL;
+    }
+
+    size_t rand_len = olm_encrypt_random_length(session);
+    size_t ciphertext_len = olm_encrypt_message_length(
+		  session,
+		  plaintext_len
+	  );
+
+    const char *serr = olm_session_last_error(session);
+    if (strcmp(serr, "SUCCESS") != 0) {
+      napi_throw_error(env, "ERROR", serr);
+      return NULL;
+    }
+
+    void *ciphertext = malloc(ciphertext_len);
+    if (ciphertext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Ciphertext buffer");
+      return NULL;
+    }
+
+    // generate some random data
+    void *rand = malloc(rand_len); 
+    if (rand == NULL){
+      napi_throw_error(env, "ENOMEM", "Could not allocate ciphertext random memory");
+      return NULL;
+    }
+
+    if (sodium_init() == -1) {
+      napi_throw_error(env, "ERROR", "Sodium not ready");
+      return NULL;
+    }
+
+    randombytes_buf(rand, rand_len);
+
+    olm_encrypt(
+		  session,
+		  plaintext,
+		  plaintext_len,
+		  rand,
+		  rand_len,
+		  ciphertext,
+		  ciphertext_len
+	  );
+    
+    free(plaintext);
+    free(rand);
+
+    serr = olm_session_last_error(session);
+    if (strcmp(serr, "SUCCESS") != 0) {
+      free(ciphertext);
+      napi_throw_error(env, "ERROR", serr);
+      return NULL;
+    }
+
+    status = napi_create_string_utf8(env, (const char*)(ciphertext), ciphertext_len, &result);
+
+    free(ciphertext);
+
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Account Keys");
+      return NULL;
+    }
+
+    return result;
+  }
+
+
   napi_value init_all (napi_env env, napi_value exports) {
     napi_value create_account_fn;
     napi_value create_account_one_time_keys_fn;
@@ -393,6 +575,9 @@ namespace self_crypto {
     napi_value identity_keys_fn;
     napi_value remove_one_time_keys_fn;
     napi_value create_outbound_session_fn;
+    napi_value create_inbound_session_fn;
+    napi_value encrypt_fn;
+    napi_value decrypt_fn;
 
     napi_create_function(env, NULL, 0, create_olm_account, NULL, &create_account_fn);
     napi_set_named_property(env, exports, "create_olm_account", create_account_fn);
@@ -411,6 +596,12 @@ namespace self_crypto {
 
     napi_create_function(env, NULL, 0, create_outbound_session, NULL, &create_outbound_session_fn);
     napi_set_named_property(env, exports, "create_outbound_session", create_outbound_session_fn);
+
+    napi_create_function(env, NULL, 0, create_inbound_session, NULL, &create_inbound_session_fn);
+    napi_set_named_property(env, exports, "create_inbound_session", create_inbound_session_fn);
+
+    napi_create_function(env, NULL, 0, encrypt, NULL, &encrypt_fn);
+    napi_set_named_property(env, exports, "encrypt", encrypt_fn);
 
     return exports;
   }

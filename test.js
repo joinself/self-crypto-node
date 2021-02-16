@@ -14,3 +14,5 @@ console.log(id_keys);
 
 var session = self_crypto.create_outbound_session(account, "gliSBuE/PavNATcg8rEcjLKRkhvQHxsZFfm3m4yBdjA", "oC+cAFahU532Bnm/NtN/nWPAln7J67eDYxt33MvEmxA");
 console.log(session);
+
+console.log(self_crypto.encrypt(session, "hello there"));
