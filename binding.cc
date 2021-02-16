@@ -459,7 +459,7 @@ namespace self_crypto {
     return sref;
   }
 
- napi_value encrypt(napi_env env, napi_callback_info info) {
+  napi_value encrypt(napi_env env, napi_callback_info info) {
     napi_value result;
     napi_value argv[2];
     size_t argc = 2;
@@ -567,6 +567,106 @@ namespace self_crypto {
     return result;
   }
 
+  napi_value decrypt(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[3];
+    size_t argc = 3;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 3) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *sref;
+    int32_t message_type = 0;
+    char *ciphertext;
+    size_t ciphertext_len = 0;
+
+    napi_status status = napi_get_value_external(env, argv[0], &sref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Session");
+      return NULL;
+    }
+
+    OlmSession *session = (OlmSession*)(sref);
+
+    // get the size of the ciphertext
+    status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &ciphertext_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Ciphertext size");
+      return NULL;
+    }
+    
+    // get the ciphertext
+    ciphertext = (char *)malloc(ciphertext_len);
+    if (ciphertext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Ciphertext buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Ciphertext");
+      return NULL;
+    }
+
+    // get the message type
+    status = napi_get_value_int32(env, argv[2], &message_type);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Message Type Argument");
+      return NULL;
+    }
+
+    size_t plaintext_len = olm_decrypt_max_plaintext_length(
+		  session,
+		  message_type,
+		  ciphertext,
+		  ciphertext_len
+	  );
+
+    const char *serr = olm_session_last_error(session);
+    if (strcmp(serr, "SUCCESS") != 0) {
+      napi_throw_error(env, "ERROR", serr);
+      return NULL;
+    }
+
+    void *plaintext = malloc(plaintext_len);
+    if (plaintext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Plaintext buffer");
+      return NULL;
+    }
+
+    plaintext_len = olm_decrypt(
+		  session,
+		  message_type,
+		  ciphertext,
+		  ciphertext_len,
+		  plaintext,
+		  plaintext_len
+	  );
+
+    free(ciphertext);
+    
+    serr = olm_session_last_error(session);
+    if (strcmp(serr, "SUCCESS") != 0) {
+      free(plaintext);
+      napi_throw_error(env, "ERROR", serr);
+      return NULL;
+    }
+
+    status = napi_create_string_utf8(env, (const char*)(plaintext), plaintext_len, &result);
+
+    free(plaintext);
+
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Plaintext");
+      return NULL;
+    }
+
+    return result;
+  }
 
   napi_value init_all (napi_env env, napi_value exports) {
     napi_value create_account_fn;
@@ -602,6 +702,9 @@ namespace self_crypto {
 
     napi_create_function(env, NULL, 0, encrypt, NULL, &encrypt_fn);
     napi_set_named_property(env, exports, "encrypt", encrypt_fn);
+    
+    napi_create_function(env, NULL, 0, decrypt, NULL, &decrypt_fn);
+    napi_set_named_property(env, exports, "decrypt", decrypt_fn);
 
     return exports;
   }
