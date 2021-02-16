@@ -2,17 +2,25 @@
 
 var self_crypto = require('./')
 
-var account = self_crypto.create_olm_account();
+// setup the two accounts
+var alice_account = self_crypto.create_olm_account();
+var bob_account = self_crypto.create_olm_account();
 
-console.log(self_crypto.create_account_one_time_keys(account, 100));
+// get bob's identity keys
+var bobs_identity_keys = self_crypto.identity_keys(bob_account);
+var bobs_identity_keys_json = JSON.parse(bobs_identity_keys);
 
-var keys = self_crypto.one_time_keys(account);
-console.log(keys);
+// generate some one time keys for bob
+self_crypto.create_account_one_time_keys(bob_account, 100);
+var bobs_one_time_keys = self_crypto.one_time_keys(bob_account);
+var bobs_one_time_keys_json = JSON.parse(bobs_one_time_keys);
 
-var id_keys = self_crypto.identity_keys(account);
-console.log(id_keys);
+// create a session from alice to bob
+var bob_session = self_crypto.create_outbound_session(alice_account, bobs_identity_keys_json["curve25519"], bobs_one_time_keys_json["curve25519"]["AAAAAQ"]);
+var ciphertext_for_bob = self_crypto.encrypt(bob_session, "hello from alice");
 
-var session = self_crypto.create_outbound_session(account, "gliSBuE/PavNATcg8rEcjLKRkhvQHxsZFfm3m4yBdjA", "oC+cAFahU532Bnm/NtN/nWPAln7J67eDYxt33MvEmxA");
-console.log(session);
+// create a session to bob from alice
+var alice_session = self_crypto.create_inbound_session(bob_account, ciphertext_for_bob);
+var plaintext_for_bob = self_crypto.decrypt(alice_session, ciphertext_for_bob, 0);
 
-console.log(self_crypto.encrypt(session, "hello there"));
+console.log(plaintext_for_bob);

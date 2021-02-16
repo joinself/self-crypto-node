@@ -306,13 +306,13 @@ namespace self_crypto {
       return NULL;
     }
 
-    status = napi_get_value_string_utf8(env, argv[1], identity_key, identity_key_len, NULL);
+    status = napi_get_value_string_utf8(env, argv[1], identity_key, identity_key_len+1, &identity_key_len);
     if (status != napi_ok) {
       napi_throw_error(env, "ERROR", "Invalid Olm Identity Key");
       return NULL;
     }
 
-    status = napi_get_value_string_utf8(env, argv[2], one_time_key, one_time_key_len, NULL);
+    status = napi_get_value_string_utf8(env, argv[2], one_time_key, one_time_key_len+1, &one_time_key_len);
     if (status != napi_ok) {
       napi_throw_error(env, "ERROR", "Invalid Olm One Time Key");
       return NULL;
@@ -340,12 +340,6 @@ namespace self_crypto {
       napi_throw_error(env, "ERROR", "Sodium not ready");
       return NULL;
     }
-
-    /*
-      TODO : are values being trimmed?
-      printf("%s\n", identity_key);
-      printf("%s\n", one_time_key);
-    */
 
     randombytes_buf(rand, rand_len);
 
@@ -410,7 +404,7 @@ namespace self_crypto {
       napi_throw_error(env, "ERROR", "Invalid Olm Time Message Ciphertext size");
       return NULL;
     }
-    
+
     // get the ciphertext one time message
     ciphertext = (char *)malloc(ciphertext_len);
     if (ciphertext == NULL) {
@@ -418,9 +412,9 @@ namespace self_crypto {
       return NULL;
     }
 
-    status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len, NULL);
+    status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len+1, &ciphertext_len);
     if (status != napi_ok) {
-      napi_throw_error(env, "ERROR", "Invalid Olm Identity Key");
+      napi_throw_error(env, "ERROR", "Invalid One Time Message Ciphertext");
       return NULL;
     }
 
@@ -489,7 +483,7 @@ namespace self_crypto {
       napi_throw_error(env, "ERROR", "Invalid Olm Time Message Ciphertext size");
       return NULL;
     }
-    
+
     // get the plaintext
     plaintext = (char *)malloc(plaintext_len);
     if (plaintext == NULL) {
@@ -497,9 +491,9 @@ namespace self_crypto {
       return NULL;
     }
 
-    status = napi_get_value_string_utf8(env, argv[1], plaintext, plaintext_len, NULL);
+    status = napi_get_value_string_utf8(env, argv[1], plaintext, plaintext_len+1, &plaintext_len);
     if (status != napi_ok) {
-      napi_throw_error(env, "ERROR", "Invalid Olm Identity Key");
+      napi_throw_error(env, "ERROR", "Invalid Plaintext size");
       return NULL;
     }
 
@@ -543,8 +537,8 @@ namespace self_crypto {
 		  rand_len,
 		  ciphertext,
 		  ciphertext_len
-	  );
-    
+	  );    
+
     free(plaintext);
     free(rand);
 
@@ -580,9 +574,10 @@ namespace self_crypto {
     }
 
     void *sref;
-    int32_t message_type = 0;
     char *ciphertext;
+    char *ciphertext_copy;
     size_t ciphertext_len = 0;
+    int32_t message_type = 0;
 
     napi_status status = napi_get_value_external(env, argv[0], &sref);
     if (status != napi_ok) {
@@ -606,11 +601,19 @@ namespace self_crypto {
       return NULL;
     }
 
-    status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len, NULL);
+    ciphertext_copy = (char *)malloc(ciphertext_len);
+    if (ciphertext_copy == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Ciphertext buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len+1, &ciphertext_len);
     if (status != napi_ok) {
       napi_throw_error(env, "ERROR", "Invalid Ciphertext");
       return NULL;
     }
+
+    strcpy(ciphertext_copy, ciphertext);
 
     // get the message type
     status = napi_get_value_int32(env, argv[2], &message_type);
@@ -622,7 +625,7 @@ namespace self_crypto {
     size_t plaintext_len = olm_decrypt_max_plaintext_length(
 		  session,
 		  message_type,
-		  ciphertext,
+		  ciphertext_copy,
 		  ciphertext_len
 	  );
 
