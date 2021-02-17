@@ -848,7 +848,7 @@ namespace self_crypto {
       return NULL;
     }
 
-    status = napi_get_value_string_utf8(env, argv[1], (char*)(plaintext), plaintext_len, NULL);
+    status = napi_get_value_string_utf8(env, argv[1], (char*)(plaintext), plaintext_len+1, NULL);
     if (status != napi_ok) {
       napi_throw_error(env, "ERROR", "Invalid Plaintext");
       return NULL;
@@ -858,7 +858,7 @@ namespace self_crypto {
 
     uint8_t *ciphertext = (uint8_t*)malloc(ciphertext_len);
     if (ciphertext == NULL) {
-      napi_throw_error(env, "ERROR", "Could not allocate Plaintext buffer");
+      napi_throw_error(env, "ERROR", "Could not allocate Ciphertext buffer");
       return NULL;
     }
 
@@ -881,6 +881,109 @@ namespace self_crypto {
     status = napi_create_string_utf8(env, (const char*)(ciphertext), ciphertext_len, &result);
 
     free(ciphertext);
+
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Plaintext");
+      return NULL;
+    }
+
+    return result;
+  }
+
+  napi_value group_decrypt(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[3];
+    size_t argc = 3;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *gsref; 
+    char *sender;
+    uint8_t *ciphertext;
+    size_t sender_len;
+    size_t ciphertext_len = 0;
+
+    // get the group session
+    napi_status status = napi_get_value_external(env, argv[0], &gsref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Group Session");
+      return NULL;
+    }
+
+    GroupSession *group_session = (GroupSession*)(gsref);
+
+    // get the senders id
+    status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &sender_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Sender size");
+      return NULL;
+    }
+
+    sender = (char*)malloc(sender_len);
+    if (sender == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Sender buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[1], sender, sender_len+1, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Sender");
+      return NULL;
+    }
+
+    // get the ciphertext
+    status = napi_get_value_string_utf8(env, argv[2], NULL, 0, &ciphertext_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Ciphertext size");
+      return NULL;
+    }
+
+    ciphertext = (uint8_t*)malloc(ciphertext_len);
+    if (ciphertext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Ciphertext buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[2], (char*)(ciphertext), ciphertext_len+1, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Plaintext");
+      return NULL;
+    }
+
+    size_t plaintext_len = omemo_decrypted_size(group_session, ciphertext, ciphertext_len);
+
+    uint8_t *plaintext = (uint8_t*)malloc(plaintext_len);
+    if (plaintext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Plaintext buffer");
+      return NULL;
+    }
+
+    plaintext_len = omemo_decrypt(
+      group_session,
+      sender,
+      plaintext, 
+      plaintext_len,
+      ciphertext,
+      ciphertext_len
+    );
+
+    free(ciphertext);
+    free(sender);
+
+    if (plaintext_len <= 0) {
+      free(plaintext);
+      napi_throw_error(env, "ERROR", "Could not Group Encrypt");
+      return NULL;
+    }
+
+    status = napi_create_string_utf8(env, (const char*)(plaintext), plaintext_len, &result);
+
+    free(plaintext);
 
     if (status != napi_ok) {
       napi_throw_error(env, "ERROR", "Invalid Plaintext");
@@ -942,12 +1045,11 @@ namespace self_crypto {
     napi_create_function(env, NULL, 0, add_group_participant, NULL, &add_group_participant_fn);
     napi_set_named_property(env, exports, "add_group_participant", add_group_participant_fn);
 
-
     napi_create_function(env, NULL, 0, group_encrypt, NULL, &group_encrypt_fn);
     napi_set_named_property(env, exports, "group_encrypt", group_encrypt_fn);
 
-    // napi_create_function(env, NULL, 0, group_decrypt, NULL, &group_decrypt_fn);
-    // napi_set_named_property(env, exports, "group_decrypt", group_decrypt_fn);
+    napi_create_function(env, NULL, 0, group_decrypt, NULL, &group_decrypt_fn);
+    napi_set_named_property(env, exports, "group_decrypt", group_decrypt_fn);
     
     return exports;
   }

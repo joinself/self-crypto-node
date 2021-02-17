@@ -27,11 +27,17 @@ console.log(plaintext_for_bob);
 
 
 // create a group session
-
 var group_session_with_bob = self_crypto.create_group_session("alice");
-console.log(group_session_with_bob);
-
 self_crypto.add_group_participant(group_session_with_bob, "bob", bob_session);
 
+// encrypt some data for bob in a group message
 var group_ciphertext_for_bob = self_crypto.group_encrypt(group_session_with_bob, "hello bob and other group members");
 console.log(group_ciphertext_for_bob);
+
+// create a group session with alice
+var group_session_with_alice = self_crypto.create_group_session("bob");
+self_crypto.add_group_participant(group_session_with_alice, "alice", alice_session);
+
+// decrypt the group message from alice
+var group_plaintext_for_bob = self_crypto.group_decrypt(group_session_with_alice, "alice", group_ciphertext_for_bob);
+console.log(group_plaintext_for_bob);
