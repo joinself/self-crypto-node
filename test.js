@@ -41,3 +41,7 @@ self_crypto.add_group_participant(group_session_with_alice, "alice", alice_sessi
 // decrypt the group message from alice
 var group_plaintext_for_bob = self_crypto.group_decrypt(group_session_with_alice, "alice", group_ciphertext_for_bob);
 console.log(group_plaintext_for_bob);
+
+
+var charlie_account = self_crypto.create_olm_account_derrived_keys("uUG4E51Hv5k4QH5lgF+5CG44SsxGz/PlM1phmLc2eqE");
+console.log(self_crypto.identity_keys(charlie_account));

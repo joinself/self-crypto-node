@@ -62,6 +62,100 @@ namespace self_crypto {
     return aref;
   }
 
+  napi_value create_olm_account_derrived_keys(napi_env env, napi_callback_info info) {
+    napi_value argv[1];
+    size_t argc = 1;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    if (sodium_init() == -1) {
+      napi_throw_error(env, "ENOMEM", "Sodium not ready");
+      return NULL;
+    }
+
+    u_char *seed;
+    char *encoded_seed;
+    size_t seed_len = 0;
+    size_t encoded_seed_len = 0;
+
+    void *abuf = malloc(olm_account_size()); 
+    
+    if (abuf == NULL) {
+      napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
+      return NULL;
+    }
+
+    OlmAccount *account = olm_account(abuf);
+
+    // get the encoded seed
+    napi_status status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &encoded_seed_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Encoded Seed Size");
+      return NULL;
+    }
+    
+    encoded_seed = (char *)malloc(encoded_seed_len);
+    if (encoded_seed == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Encoded Seed buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[0], encoded_seed, encoded_seed_len+1, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Encoded Seed");
+      return NULL;
+    }
+
+    // allocate memory for the decoded seed
+    seed_len = crypto_sign_publickeybytes();
+
+    seed = (u_char *)malloc(seed_len);
+    if (seed == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Seed buffer");
+      return NULL;
+    }
+
+    size_t success = sodium_base642bin(
+        seed,
+        seed_len,
+        encoded_seed,
+        encoded_seed_len,
+        NULL,
+        &seed_len,
+        NULL,
+        sodium_base64_VARIANT_ORIGINAL_NO_PADDING
+    );
+
+    free(encoded_seed);
+
+    if(success != 0) {
+      free(seed);
+      napi_throw_error(env, "ERROR", "Could not decode seed");
+      return NULL;
+    }
+
+    olm_create_account_derrived_keys(
+      account, 
+      seed, 
+      seed_len
+    );
+
+    napi_value aref;
+
+    status = napi_create_external(env, account, NULL, NULL, &aref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Could not create olm account reference");
+      return NULL;
+    }
+
+    return aref;
+  }
+
   napi_value create_account_one_time_keys(napi_env env, napi_callback_info info) {
     napi_value argv[2];
     size_t argc = 2;
@@ -995,6 +1089,7 @@ namespace self_crypto {
 
   napi_value init_all (napi_env env, napi_value exports) {
     napi_value create_account_fn;
+    napi_value create_olm_account_derrived_keys_fn;
     napi_value create_account_one_time_keys_fn;
     napi_value one_time_keys_fn;
     napi_value identity_keys_fn;
@@ -1011,6 +1106,9 @@ namespace self_crypto {
 
     napi_create_function(env, NULL, 0, create_olm_account, NULL, &create_account_fn);
     napi_set_named_property(env, exports, "create_olm_account", create_account_fn);
+
+    napi_create_function(env, NULL, 0, create_olm_account_derrived_keys, NULL, &create_olm_account_derrived_keys_fn);
+    napi_set_named_property(env, exports, "create_olm_account_derrived_keys", create_olm_account_derrived_keys_fn);
     
     napi_create_function(env, NULL, 0, create_account_one_time_keys, NULL, &create_account_one_time_keys_fn);
     napi_set_named_property(env, exports, "create_account_one_time_keys", create_account_one_time_keys_fn);
