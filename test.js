@@ -25,7 +25,6 @@ var plaintext_for_bob = self_crypto.decrypt(alice_session, ciphertext_for_bob, 0
 
 console.log(plaintext_for_bob);
 
-
 // create a group session
 var group_session_with_bob = self_crypto.create_group_session("alice");
 self_crypto.add_group_participant(group_session_with_bob, "bob", bob_session);
@@ -42,6 +41,16 @@ self_crypto.add_group_participant(group_session_with_alice, "alice", alice_sessi
 var group_plaintext_for_bob = self_crypto.group_decrypt(group_session_with_alice, "alice", group_ciphertext_for_bob);
 console.log(group_plaintext_for_bob);
 
-
 var charlie_account = self_crypto.create_olm_account_derrived_keys("uUG4E51Hv5k4QH5lgF+5CG44SsxGz/PlM1phmLc2eqE");
 console.log(self_crypto.identity_keys(charlie_account));
+
+// pickle an account
+var alice_account_pickle = self_crypto.pickle_account(alice_account);
+console.log(alice_account_pickle);
+
+// pickle an account with password
+var alice_account_pickle = self_crypto.pickle_account(alice_account, "password");
+console.log(alice_account_pickle);
+
+var alice_unpickled_account = self_crypto.unpickle_account(alice_account_pickle, "password");
+console.log(self_crypto.identity_keys(alice_unpickled_account));
