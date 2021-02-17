@@ -608,7 +608,7 @@ namespace self_crypto {
 
     ciphertext_copy = (char *)malloc(ciphertext_len);
     if (ciphertext_copy == NULL) {
-      napi_throw_error(env, "ERROR", "Could not allocate Ciphertext buffer");
+      napi_throw_error(env, "ERROR", "Could not allocate Ciphertext Copy buffer");
       return NULL;
     }
 
@@ -703,20 +703,191 @@ namespace self_crypto {
       return NULL;
     }
 
+    status = napi_get_value_string_utf8(env, argv[0], identity, identity_len+1, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Identity");
+      return NULL;
+    }
+
     GroupSession *group_session = omemo_create_group_session();
-    // omemo_set_identity(group_session, identity);
+    omemo_set_identity(group_session, identity);
 
     napi_value sref;
 
-  /*
     status = napi_create_external(env, group_session, NULL, NULL, &sref);
     if (status != napi_ok) {
       napi_throw_error(env, "ERROR", "Could not create olm session reference");
       return NULL;
     }
-*/
 
     return sref;
+  }
+
+  napi_value destroy_group_session(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[1];
+    size_t argc = 1;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *gsref;
+
+    // get the group session
+    napi_status status = napi_get_value_external(env, argv[0], &gsref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Group Session");
+      return NULL;
+    }
+
+    GroupSession *group_session = (GroupSession*)(gsref);
+
+    omemo_destroy_group_session(group_session);
+
+    return result;
+  }
+
+  napi_value add_group_participant(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[3];
+    size_t argc = 3;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 3) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *sref;
+    void *gsref; 
+    char *identity;
+    size_t identity_len = 0;
+
+    // get the group session
+    napi_status status = napi_get_value_external(env, argv[0], &gsref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Group Session");
+      return NULL;
+    }
+
+    GroupSession *group_session = (GroupSession*)(gsref);
+
+    // get the identity
+    status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &identity_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Identity size");
+      return NULL;
+    }
+
+    identity = (char *)malloc(identity_len);
+    if (identity == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Identity buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[1], identity, identity_len+1, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Identity");
+      return NULL;
+    }
+
+    // get the olm session
+    status = napi_get_value_external(env, argv[2], &sref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Session");
+      return NULL;
+    }
+
+    OlmSession *session = (OlmSession*)(sref);
+
+    omemo_add_group_participant(group_session, identity, session);
+
+    return result;
+  }
+
+  napi_value group_encrypt(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[2];
+    size_t argc = 2;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *gsref; 
+    uint8_t *plaintext;
+    size_t plaintext_len = 0;
+
+    // get the group session
+    napi_status status = napi_get_value_external(env, argv[0], &gsref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Group Session");
+      return NULL;
+    }
+
+    GroupSession *group_session = (GroupSession*)(gsref);
+
+    // get the plaintext
+    status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &plaintext_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Plaintext size");
+      return NULL;
+    }
+
+    plaintext = (uint8_t*)malloc(plaintext_len);
+    if (plaintext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Plaintext buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[1], (char*)(plaintext), plaintext_len, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Plaintext");
+      return NULL;
+    }
+
+    size_t ciphertext_len = omemo_encrypted_size(group_session, plaintext_len);
+
+    uint8_t *ciphertext = (uint8_t*)malloc(ciphertext_len);
+    if (ciphertext == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Plaintext buffer");
+      return NULL;
+    }
+
+    ciphertext_len = omemo_encrypt(
+      group_session, 
+      plaintext, 
+      plaintext_len, 
+      ciphertext, 
+      ciphertext_len
+    );
+
+    free(plaintext);
+
+    if (ciphertext_len <= 0) {
+      free(ciphertext);
+      napi_throw_error(env, "ERROR", "Could not Group Encrypt");
+      return NULL;
+    }
+
+    status = napi_create_string_utf8(env, (const char*)(ciphertext), ciphertext_len, &result);
+
+    free(ciphertext);
+
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Plaintext");
+      return NULL;
+    }
+
+    return result;
   }
 
   napi_value init_all (napi_env env, napi_value exports) {
@@ -730,6 +901,10 @@ namespace self_crypto {
     napi_value encrypt_fn;
     napi_value decrypt_fn;
     napi_value create_group_session_fn;
+    napi_value destroy_group_session_fn;
+    napi_value add_group_participant_fn;
+    napi_value group_encrypt_fn;
+    napi_value group_decrypt_fn;
 
     napi_create_function(env, NULL, 0, create_olm_account, NULL, &create_account_fn);
     napi_set_named_property(env, exports, "create_olm_account", create_account_fn);
@@ -761,6 +936,19 @@ namespace self_crypto {
     napi_create_function(env, NULL, 0, create_group_session, NULL, &create_group_session_fn);
     napi_set_named_property(env, exports, "create_group_session", create_group_session_fn);
 
+    napi_create_function(env, NULL, 0, destroy_group_session, NULL, &destroy_group_session_fn);
+    napi_set_named_property(env, exports, "destroy_group_session", destroy_group_session_fn);
+
+    napi_create_function(env, NULL, 0, add_group_participant, NULL, &add_group_participant_fn);
+    napi_set_named_property(env, exports, "add_group_participant", add_group_participant_fn);
+
+
+    napi_create_function(env, NULL, 0, group_encrypt, NULL, &group_encrypt_fn);
+    napi_set_named_property(env, exports, "group_encrypt", group_encrypt_fn);
+
+    // napi_create_function(env, NULL, 0, group_decrypt, NULL, &group_decrypt_fn);
+    // napi_set_named_property(env, exports, "group_decrypt", group_decrypt_fn);
+    
     return exports;
   }
 

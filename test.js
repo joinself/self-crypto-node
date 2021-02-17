@@ -30,3 +30,8 @@ console.log(plaintext_for_bob);
 
 var group_session_with_bob = self_crypto.create_group_session("alice");
 console.log(group_session_with_bob);
+
+self_crypto.add_group_participant(group_session_with_bob, "bob", bob_session);
+
+var group_ciphertext_for_bob = self_crypto.group_encrypt(group_session_with_bob, "hello bob and other group members");
+console.log(group_ciphertext_for_bob);
