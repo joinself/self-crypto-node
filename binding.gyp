@@ -6,7 +6,7 @@
         "binding.cc"
       ],
       "ldflags": [
-        #"-Wl,-z,defs",
+        "-Wl,-z,defs"
       ],
       "libraries": [
         "-lsodium",

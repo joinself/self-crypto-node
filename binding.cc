@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <sodium.h>
 #include <string.h>
-#include <self_omemo.h>
 #include <self_olm/olm.h>
 #include <stdlib.h>
+
+extern "C" {
+  #include <self_omemo.h>
+}
 
 namespace self_crypto {
 
@@ -700,8 +703,8 @@ namespace self_crypto {
       return NULL;
     }
 
-    GroupSession *group_session; // = omemo_create_group_session();
-    omemo_set_identity(group_session, identity);
+    GroupSession *group_session = omemo_create_group_session();
+    // omemo_set_identity(group_session, identity);
 
     napi_value sref;
 
