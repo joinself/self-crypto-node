@@ -7,6 +7,9 @@
 #include <self_olm/olm.h>
 #include <stdlib.h>
 
+// The compiler for some reason wants to treat self_omemo as a
+// C++ library, and mangles the symbols resulting in undefined symbols at runtime. 
+// Tell it to explicitly include self_omemo as a C library.
 extern "C" {
   #include <self_omemo.h>
 }
@@ -1252,7 +1255,7 @@ namespace self_crypto {
 
     napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
 
-    if (argc < 1) {
+    if (argc < 2) {
       napi_throw_error(env, "EINVAL", "Too few arguments");
       return NULL;
     }
@@ -1332,7 +1335,7 @@ namespace self_crypto {
 
     napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
 
-    if (argc < 1) {
+    if (argc < 3) {
       napi_throw_error(env, "EINVAL", "Too few arguments");
       return NULL;
     }
@@ -1428,6 +1431,125 @@ namespace self_crypto {
     return result;
   }
 
+  napi_value ed25519_pk_to_curve25519(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[1];
+    size_t argc = 1;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    uint8_t *ed25519_pk;
+    char *encoded_ed25519_pk;
+    size_t encoded_ed25519_pk_len = 0;
+
+    // get the ed25519 key
+    napi_status status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &encoded_ed25519_pk_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Ed25519 Public Key size");
+      return NULL;
+    }
+
+    encoded_ed25519_pk = (char *)malloc(encoded_ed25519_pk_len);
+    if (encoded_ed25519_pk == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Ed25519 Public Key buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[0], (char*)(encoded_ed25519_pk), encoded_ed25519_pk_len+1, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Ed25519 Public Key");
+      return NULL;
+    }
+
+    // decode the ed25519 pk
+    size_t ed25519_pk_len = crypto_sign_publickeybytes();
+
+    if((ed25519_pk = (uint8_t *)malloc(ed25519_pk_len)) == NULL){
+      napi_throw_error(env, "ERROR", "Could not allocate Ed25519 Public Key");
+      return NULL;
+    }
+
+    size_t success = sodium_base642bin(
+      ed25519_pk,
+      ed25519_pk_len,
+      encoded_ed25519_pk,
+      encoded_ed25519_pk_len,
+      NULL,
+      &ed25519_pk_len,
+      NULL,
+      sodium_base64_VARIANT_URLSAFE_NO_PADDING
+    );
+
+    free(encoded_ed25519_pk);
+
+    if(success != 0) {
+      free(ed25519_pk);
+      napi_throw_error(env, "ERROR", "Could not decode Ed25519 Public Key");
+      return NULL;
+    }
+
+    uint8_t *curve25519_pk;
+    char *encoded_curve25519_pk;
+    size_t encoded_curve25519_pk_len;
+
+    size_t curve25519_pk_len = crypto_sign_publickeybytes();
+
+    if((curve25519_pk = (uint8_t *)malloc(curve25519_pk_len)) == NULL){
+      napi_throw_error(env, "ERROR", "Could not allocate Curve25519 Public Key");
+      return NULL;
+    }
+
+    success = crypto_sign_ed25519_pk_to_curve25519(
+      curve25519_pk,
+      ed25519_pk  
+    );
+
+    free(ed25519_pk);
+
+    if(success != 0) {
+      free(curve25519_pk);
+      napi_throw_error(env, "ERROR", "Could not convert Ed25519 Public Key to Curve25519 Public Key");
+      return NULL;
+    }
+
+    encoded_curve25519_pk_len = sodium_base64_ENCODED_LEN(
+      curve25519_pk_len,
+      sodium_base64_VARIANT_ORIGINAL_NO_PADDING
+    );
+
+    if((encoded_curve25519_pk = (char *)malloc(encoded_curve25519_pk_len)) == NULL){
+      free(curve25519_pk);
+      napi_throw_error(env, "ERROR", "Could not convert Ed25519 Public Key to Curve25519 Public Key");
+      return NULL;
+    }
+
+    sodium_bin2base64(
+      encoded_curve25519_pk,
+      encoded_curve25519_pk_len,
+      curve25519_pk,
+      curve25519_pk_len,
+      sodium_base64_VARIANT_ORIGINAL_NO_PADDING
+    );
+
+    free(curve25519_pk);
+
+    status = napi_create_string_utf8(env, (const char*)(encoded_curve25519_pk), encoded_curve25519_pk_len, &result);
+
+    free(encoded_curve25519_pk);
+
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Encoded Curve25519 Public Key");
+      return NULL;
+    }
+
+    return result;
+  }
+
   napi_value init_all (napi_env env, napi_value exports) {
     napi_value create_account_fn;
     napi_value create_olm_account_derrived_keys_fn;
@@ -1448,6 +1570,7 @@ namespace self_crypto {
     napi_value add_group_participant_fn;
     napi_value group_encrypt_fn;
     napi_value group_decrypt_fn;
+    napi_value ed25519_pk_to_curve25519_fn;
 
     napi_create_function(env, NULL, 0, create_olm_account, NULL, &create_account_fn);
     napi_set_named_property(env, exports, "create_olm_account", create_account_fn);
@@ -1505,6 +1628,9 @@ namespace self_crypto {
 
     napi_create_function(env, NULL, 0, group_decrypt, NULL, &group_decrypt_fn);
     napi_set_named_property(env, exports, "group_decrypt", group_decrypt_fn);
+
+    napi_create_function(env, NULL, 0, ed25519_pk_to_curve25519, NULL, &ed25519_pk_to_curve25519_fn);
+    napi_set_named_property(env, exports, "ed25519_pk_to_curve25519", ed25519_pk_to_curve25519_fn);
     
     return exports;
   }

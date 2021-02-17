@@ -58,3 +58,13 @@ console.log(self_crypto.identity_keys(alice_unpickled_account));
 // pickle a session
 var alice_session_pickle = self_crypto.pickle_session(alice_session, "password");
 var session_with_alice_unpickled = self_crypto.unpickle_session(alice_session_pickle, "password");
+
+// convert a key
+var charlie_identity_keys_json = self_crypto.identity_keys(charlie_account);
+var charlie_identity_keys = JSON.parse(charlie_identity_keys_json);
+
+console.log(charlie_identity_keys["curve25519"])
+
+// fails as self uses URLSAFE encoded keys, whereas olm returns keys encoded with a normal base64 variant
+var charlie_curve25519_pk = self_crypto.ed25519_pk_to_curve25519(charlie_identity_keys["ed25519"])
+console.log(charlie_curve25519_pk);
