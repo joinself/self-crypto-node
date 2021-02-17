@@ -724,6 +724,175 @@ namespace self_crypto {
     return sref;
   }
 
+  napi_value pickle_session(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_value argv[2];
+    size_t argc = 2;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    void *sref;
+    char *pickle;
+    char *password;
+    size_t password_len = 0;
+
+    // get the session
+    napi_status status = napi_get_value_external(env, argv[0], &sref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Session");
+      return NULL;
+    }
+
+    OlmSession *session = (OlmSession*)(sref);
+
+    if (argc > 1) {
+      // get the pickles password if provided
+      napi_status status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &password_len);
+      if (status != napi_ok) {
+        napi_throw_error(env, "ERROR", "Invalid Pickle Password Size");
+        return NULL;
+      }
+    
+      password = (char *)malloc(password_len);
+      if (password == NULL) {
+        napi_throw_error(env, "ERROR", "Could not allocate Pickle Password buffer");
+        return NULL;
+      }
+
+      status = napi_get_value_string_utf8(env, argv[1], password, password_len+1, NULL);
+      if (status != napi_ok) {
+        napi_throw_error(env, "ERROR", "Invalid Pickle Password");
+        return NULL;
+      }
+    }
+
+    size_t pickle_len = olm_pickle_session_length(session);
+
+    pickle = (char *)malloc(pickle_len);
+    if (pickle == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Pickle buffer");
+      return NULL;
+    }
+
+    olm_pickle_session(
+      session, 
+      password, 
+      password_len, 
+      pickle, 
+      pickle_len
+    );
+
+    if (password != NULL) {
+      free(password);
+    }
+
+    status = napi_create_string_utf8(env, (const char*)(pickle), pickle_len, &result);
+
+    free(pickle);
+
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Olm Session Pickle");
+      return NULL;
+    }
+
+    return result;
+  }
+
+  napi_value unpickle_session(napi_env env, napi_callback_info info) {
+    napi_value argv[2];
+    size_t argc = 2;
+
+    napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+    if (argc < 1) {
+      napi_throw_error(env, "EINVAL", "Too few arguments");
+      return NULL;
+    }
+
+    char *pickle;
+    char *password;
+    size_t pickle_len = 0;
+    size_t password_len = 0;
+
+    // get the pickle
+    napi_status status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &pickle_len);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Pickle Size");
+      return NULL;
+    }
+    
+    pickle = (char *)malloc(pickle_len);
+    if (pickle == NULL) {
+      napi_throw_error(env, "ERROR", "Could not allocate Pickle buffer");
+      return NULL;
+    }
+
+    status = napi_get_value_string_utf8(env, argv[0], pickle, pickle_len+1, NULL);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Invalid Pickle");
+      return NULL;
+    }
+
+    if (argc > 1) {
+      // get the pickles password if provided
+      napi_status status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &password_len);
+      if (status != napi_ok) {
+        napi_throw_error(env, "ERROR", "Invalid Pickle Password Size");
+        return NULL;
+      }
+    
+      password = (char *)malloc(password_len);
+      if (password == NULL) {
+        napi_throw_error(env, "ERROR", "Could not allocate Pickle Password buffer");
+        return NULL;
+      }
+
+      status = napi_get_value_string_utf8(env, argv[1], password, password_len+1, NULL);
+      if (status != napi_ok) {
+        napi_throw_error(env, "ERROR", "Invalid Pickle Password ");
+        return NULL;
+      }
+    }
+
+    void *sbuf = malloc(olm_session_size()); 
+    
+    if (sbuf == NULL) {
+      napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
+      return NULL;
+    }
+
+    OlmSession *session = olm_session(sbuf);
+
+    olm_unpickle_session(
+      session,
+      password,
+      password_len,
+      pickle,
+      pickle_len
+    );
+
+    if (password != NULL) {
+      free(password);
+    }
+
+    free(pickle);
+
+    napi_value aref;
+
+    status = napi_create_external(env, session, NULL, NULL, &aref);
+    if (status != napi_ok) {
+      napi_throw_error(env, "ERROR", "Could not create olm session reference");
+      return NULL;
+    }
+
+    return aref;
+  }
+
   napi_value encrypt(napi_env env, napi_callback_info info) {
     napi_value result;
     napi_value argv[2];
@@ -1270,6 +1439,8 @@ namespace self_crypto {
     napi_value remove_one_time_keys_fn;
     napi_value create_outbound_session_fn;
     napi_value create_inbound_session_fn;
+    napi_value pickle_session_fn;
+    napi_value unpickle_session_fn;
     napi_value encrypt_fn;
     napi_value decrypt_fn;
     napi_value create_group_session_fn;
@@ -1307,6 +1478,12 @@ namespace self_crypto {
 
     napi_create_function(env, NULL, 0, create_inbound_session, NULL, &create_inbound_session_fn);
     napi_set_named_property(env, exports, "create_inbound_session", create_inbound_session_fn);
+
+    napi_create_function(env, NULL, 0, pickle_session, NULL, &pickle_session_fn);
+    napi_set_named_property(env, exports, "pickle_session", pickle_session_fn);
+    
+    napi_create_function(env, NULL, 0, unpickle_session, NULL, &unpickle_session_fn);
+    napi_set_named_property(env, exports, "unpickle_session", unpickle_session_fn);
 
     napi_create_function(env, NULL, 0, encrypt, NULL, &encrypt_fn);
     napi_set_named_property(env, exports, "encrypt", encrypt_fn);

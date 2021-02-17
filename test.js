@@ -54,3 +54,7 @@ console.log(alice_account_pickle);
 
 var alice_unpickled_account = self_crypto.unpickle_account(alice_account_pickle, "password");
 console.log(self_crypto.identity_keys(alice_unpickled_account));
+
+// pickle a session
+var alice_session_pickle = self_crypto.pickle_session(alice_session, "password");
+var session_with_alice_unpickled = self_crypto.unpickle_session(alice_session_pickle, "password");
