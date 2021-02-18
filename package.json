@@ -9,11 +9,11 @@
   "devDependencies": {
     "prebuildify": "^2.6.0",
     "standard": "^11.0.1",
-    "tape": "^4.9.0"
+    "tape": "^5.1.1"
   },
   "scripts": {
     "install": "node-gyp-build",
-    "test": "standard && tape test.js",
+    "test": "standard && tape tests/*.js",
     "prebuild": "prebuildify --napi"
   },
   "repository": {

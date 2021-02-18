@@ -615,6 +615,9 @@ namespace self_crypto {
         }
 
         if (sodium_init() == -1) {
+            free(rand);
+            free(identity_key);
+            free(one_time_key);
             napi_throw_error(env, "ERROR", "Sodium not ready");
             return NULL;
         }
@@ -711,8 +714,6 @@ namespace self_crypto {
             ciphertext,
             ciphertext_len
         );
-
-        free(ciphertext);
 
         const char * serr = olm_session_last_error(session);
         if (strcmp(serr, "SUCCESS") != 0) {
@@ -1050,12 +1051,15 @@ namespace self_crypto {
 
         ciphertext_copy = (char * ) malloc(ciphertext_len);
         if (ciphertext_copy == NULL) {
+            free(ciphertext);
             napi_throw_error(env, "ERROR", "Could not allocate ciphertext Copy buffer");
             return NULL;
         }
 
         status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len + 1, & ciphertext_len);
         if (status != napi_ok) {
+            free(ciphertext);
+            free(ciphertext_copy);
             napi_throw_error(env, "ERROR", "Invalid ciphertext");
             return NULL;
         }
@@ -1078,6 +1082,8 @@ namespace self_crypto {
 
         const char * serr = olm_session_last_error(session);
         if (strcmp(serr, "SUCCESS") != 0) {
+            free(ciphertext);
+            free(ciphertext_copy);
             napi_throw_error(env, "ERROR", serr);
             return NULL;
         }
