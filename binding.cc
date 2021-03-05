@@ -1548,7 +1548,7 @@ namespace self_crypto {
 
         free(curve25519_pk);
 
-        status = napi_create_string_utf8(env, (const char * )(encoded_curve25519_pk), encoded_curve25519_pk_len, & result);
+        status = napi_create_string_utf8(env, (const char * )(encoded_curve25519_pk), encoded_curve25519_pk_len-1, & result);
 
         free(encoded_curve25519_pk);
 
