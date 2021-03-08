@@ -596,9 +596,6 @@ namespace self_crypto {
             return NULL;
         }
 
-        printf("curve25519 identity key: %s\n", identity_key);
-        printf("one time key: %s\n", one_time_key);
-
         // allocate the session
         void * sbuf = malloc(olm_session_size());
         if (sbuf == NULL) {
@@ -1320,8 +1317,6 @@ namespace self_crypto {
             ciphertext,
             ciphertext_len
         );
-
-        printf("ciphertext from c: %s\n", (char *)(ciphertext));
 
         free(plaintext);
 
