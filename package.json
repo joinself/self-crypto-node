@@ -1,6 +1,6 @@
 {
   "name": "self-crypto",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A package for end to end encryption on the self network",
   "main": "index.js",
   "dependencies": {
@@ -17,9 +17,6 @@
     "test": "standard && tape tests/*.js",
     "prebuild": "prebuildify --napi"
   },
-  "include_dirs": [
-    "<!@(node -p \"require('node-addon-api').include\")"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/joinself/self-crypto-node.git"
