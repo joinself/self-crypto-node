@@ -1,15 +1,10 @@
 // Copyright 2020 Self Group Ltd. All Rights Reserved.
 
 #include <node_api.h>
-
 #include <stdio.h>
-
 #include <sodium.h>
-
 #include <string.h>
-
 #include <self_olm/olm.h>
-
 #include <stdlib.h>
 
 // The compiler for some reason wants to treat self_omemo as a
@@ -107,7 +102,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        encoded_seed = (char * ) malloc(encoded_seed_len);
+        encoded_seed = (char * ) malloc(encoded_seed_len + 1);
         if (encoded_seed == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate encoded seed buffer");
             return NULL;
@@ -122,7 +117,7 @@ namespace self_crypto {
         // allocate memory for the decoded seed
         seed_len = crypto_sign_publickeybytes();
 
-        seed = (u_char * ) malloc(seed_len);
+        seed = (u_char * ) malloc(seed_len + 1);
         if (seed == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate seed buffer");
             return NULL;
@@ -200,7 +195,7 @@ namespace self_crypto {
                 return NULL;
             }
 
-            password = (char * ) malloc(password_len);
+            password = (char * ) malloc(password_len + 1);
             if (password == NULL) {
                 napi_throw_error(env, "ERROR", "Could not allocate pickle password buffer");
                 return NULL;
@@ -268,7 +263,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        pickle = (char * ) malloc(pickle_len);
+        pickle = (char * ) malloc(pickle_len + 1);
         if (pickle == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate pickle buffer");
             return NULL;
@@ -288,7 +283,7 @@ namespace self_crypto {
                 return NULL;
             }
 
-            password = (char * ) malloc(password_len);
+            password = (char * ) malloc(password_len + 1);
             if (password == NULL) {
                 napi_throw_error(env, "ERROR", "Could not allocate pickle password buffer");
                 return NULL;
@@ -572,13 +567,13 @@ namespace self_crypto {
         }
 
         // get the identity and one time keys
-        identity_key = (char * ) malloc(identity_key_len);
+        identity_key = (char * ) malloc(identity_key_len + 1);
         if (identity_key == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate identity key buffer");
             return NULL;
         }
 
-        one_time_key = (char * ) malloc(one_time_key_len);
+        one_time_key = (char * ) malloc(one_time_key_len + 1);
         if (one_time_key == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate one time key buffer");
             return NULL;
@@ -687,7 +682,7 @@ namespace self_crypto {
         }
 
         // get the ciphertext one time message
-        ciphertext = (char * ) malloc(ciphertext_len);
+        ciphertext = (char * ) malloc(ciphertext_len + 1);
         if (ciphertext == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate one time message ciphertext buffer");
             return NULL;
@@ -766,7 +761,7 @@ namespace self_crypto {
                 return NULL;
             }
 
-            password = (char * ) malloc(password_len);
+            password = (char * ) malloc(password_len + 1);
             if (password == NULL) {
                 napi_throw_error(env, "ERROR", "Could not allocate pickle password buffer");
                 return NULL;
@@ -834,7 +829,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        pickle = (char * ) malloc(pickle_len);
+        pickle = (char * ) malloc(pickle_len + 1);
         if (pickle == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate pickle buffer");
             return NULL;
@@ -933,7 +928,7 @@ namespace self_crypto {
         }
 
         // get the plaintext
-        plaintext = (char * ) malloc(plaintext_len);
+        plaintext = (char * ) malloc(plaintext_len + 1);
         if (plaintext == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate plaintext buffer");
             return NULL;
@@ -1043,13 +1038,13 @@ namespace self_crypto {
         }
 
         // get the ciphertext
-        ciphertext = (char * ) malloc(ciphertext_len);
+        ciphertext = (char * ) malloc(ciphertext_len + 1);
         if (ciphertext == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate ciphertext buffer");
             return NULL;
         }
 
-        ciphertext_copy = (char * ) malloc(ciphertext_len);
+        ciphertext_copy = (char * ) malloc(ciphertext_len + 1);
         if (ciphertext_copy == NULL) {
             free(ciphertext);
             napi_throw_error(env, "ERROR", "Could not allocate ciphertext Copy buffer");
@@ -1145,7 +1140,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        identity = (char * ) malloc(identity_len);
+        identity = (char * ) malloc(identity_len + 1);
         if (identity == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate Identity buffer");
             return NULL;
@@ -1232,7 +1227,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        identity = (char * ) malloc(identity_len);
+        identity = (char * ) malloc(identity_len + 1);
         if (identity == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate identity buffer");
             return NULL;
@@ -1290,7 +1285,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        plaintext = (uint8_t * ) malloc(plaintext_len);
+        plaintext = (uint8_t * ) malloc(plaintext_len + 1);
         if (plaintext == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate plaintext buffer");
             return NULL;
@@ -1372,7 +1367,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        sender = (char * ) malloc(sender_len);
+        sender = (char * ) malloc(sender_len + 1);
         if (sender == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate sender buffer");
             return NULL;
@@ -1391,7 +1386,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        ciphertext = (uint8_t * ) malloc(ciphertext_len);
+        ciphertext = (uint8_t * ) malloc(ciphertext_len + 1);
         if (ciphertext == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate ciphertext buffer");
             return NULL;
@@ -1464,7 +1459,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        encoded_ed25519_pk = (char * ) malloc(encoded_ed25519_pk_len);
+        encoded_ed25519_pk = (char * ) malloc(encoded_ed25519_pk_len + 1);
         if (encoded_ed25519_pk == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate ed25519 public key buffer");
             return NULL;
