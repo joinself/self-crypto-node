@@ -1,9 +1,9 @@
 {
   "name": "self-crypto",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "A package for end to end encryption on the self network",
   "main": "index.js",
-  "files": ["prebuilds/*"],
+  "files": ["prebuilds/*", "binding.cc", "binding.gyp", "yarn.lock"],
   "dependencies": {
     "node-addon-api": "^1.0.0",
     "node-gyp-build": "^4.2.3"
