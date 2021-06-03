@@ -2,5 +2,6 @@ node_modules
 build
 includes/*
 libraries/*
+prebuilds/*
 *.lib
 yarn-error.log
