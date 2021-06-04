@@ -1,6 +1,6 @@
 {
   "name": "self-crypto",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "A package for end to end encryption on the self network",
   "main": "index.js",
   "files": ["prebuilds/*", "binding.cc", "binding.gyp", "yarn.lock"],
@@ -17,7 +17,7 @@
     "dev": "node-gyp rebuild",
     "install": "node-gyp-build",
     "test": "standard && tape tests/*.js",
-    "prebuild": "prebuildify --napi --strip"
+    "prebuild": "prebuildify --napi --strip --electron-compat"
   },
   "repository": {
     "type": "git",
