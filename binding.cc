@@ -81,7 +81,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        u_char * seed;
+        uint8_t * seed;
         char * encoded_seed;
         size_t seed_len = 0;
         size_t encoded_seed_len = 0;
@@ -117,7 +117,7 @@ namespace self_crypto {
         // allocate memory for the decoded seed
         seed_len = crypto_sign_publickeybytes();
 
-        seed = (u_char * ) malloc(seed_len + 1);
+        seed = (uint8_t * ) malloc(seed_len + 1);
         if (seed == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate seed buffer");
             return NULL;
