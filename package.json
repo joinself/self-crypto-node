@@ -1,6 +1,6 @@
 {
   "name": "self-crypto",
-  "version": "1.0.9",
+  "version": "1.0.11",
   "description": "A package for end to end encryption on the self network",
   "main": "index.js",
   "files": ["prebuilds/*"],
