@@ -48,7 +48,7 @@ unit-test-linux:
   image: node:15.14.0-buster
   script:
     - *build-env-linux
-    - *build
+    - *unit-test
   only:
     - branches
 
@@ -56,21 +56,22 @@ build-linux:
   stage: build
   image: node:15.14.0-buster
   script:
-    - ls -lah
     - *build-env-linux
     - *build
     - ls -lah prebuilds
+    - ls -lah prebuilds/linux-x64
   artifacts:
     paths:
       - release
   only:
     - branches
 
-.build-mac:
+build-mac:
   stage: build
   script:
     - *build-env-mac
     - *build
+    - ls -lah prebuilds
   artifacts:
     paths:
       - release
