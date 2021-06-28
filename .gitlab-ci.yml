@@ -14,6 +14,10 @@ stages:
   export NVM_DIR="$HOME/.nvm"
   . $(brew --prefix)/opt/nvm/nvm.sh
 
+.build-env-windows: &build-env-windows |
+  wget https://static.joinself.com/self-crypto/self-crypto-windows-dependencies.zip -outfile deps.zip
+  expand-archive deps.zip .
+
 .unit-test: &unit-test |
   yarn install
   yarn test
@@ -94,7 +98,9 @@ build-mac:
 build-windows:
   stage: build
   script:
+    - *build-env-windows
     - *build
+    - ls
   artifacts:
     paths:
       - release
