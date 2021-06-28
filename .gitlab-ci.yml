@@ -67,17 +67,26 @@ unit-test-mac:
   tags:
     - mac
 
+unit-test-windows:
+  stage: prebuild
+  script:
+    - *build-env-windows
+    - *unit-test
+  only:
+    - branches
+  tags:
+    - windows
+
 build-linux:
   stage: build
   image: node:15.14.0-buster
   script:
     - *build-env-linux
     - *build
-    - ls -lah prebuilds
-    - ls -lah prebuilds/linux-x64
+    - cp -r prebuilds/linux-x64 .artifacts
   artifacts:
     paths:
-      - release
+      - .artifacts
   only:
     - branches
 
@@ -86,10 +95,10 @@ build-mac:
   script:
     - *build-env-mac
     - *build
-    - ls -lah prebuilds/darwin-x64
+    - cp -r prebuilds/darwin-x64 .artifacts
   artifacts:
     paths:
-      - release
+      - .artifacts
   only:
     - branches
   tags:
@@ -100,22 +109,28 @@ build-windows:
   script:
     - *build-env-windows
     - *build
-    - ls prebuilds/win32-x64
+    - cp -r prebuilds/win32-x64 .artifacts
   artifacts:
     paths:
-      - release
+      - .artifacts
   only:
     - branches
   tags:
     - windows
 
-.github:
+npm:
   stage: deploy
-  image: eu.gcr.io/principal-oxide-204416/deploy
+  image: node:15.14.0-buster
   script:
+    - ls -lah .artifacts
+    - ls -lah .artifacts/linux-x64
+    - ls -lah .artifacts/darwin-x64
+    - ls -lah .artifacts/win32-x64
+    - npm -v
+    - exit 0
     - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
     - ${SCRIPTS_DIR}/git-setup
     - *deploy-github
   only:
-    - master
+    - branches
