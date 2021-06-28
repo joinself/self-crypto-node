@@ -53,6 +53,16 @@ unit-test-linux:
   only:
     - branches
 
+unit-test-mac:
+  stage: prebuild
+  script:
+    - *build-env-mac
+    - *unit-test
+  only:
+    - branches
+  tags:
+    - mac
+
 build-linux:
   stage: build
   image: node:15.14.0-buster
@@ -72,7 +82,7 @@ build-mac:
   script:
     - *build-env-mac
     - *build
-    - ls -lah prebuilds
+    - ls -lah prebuilds/darwin-x64
   artifacts:
     paths:
       - release
@@ -81,7 +91,7 @@ build-mac:
   tags:
     - mac
 
-.build-windows:
+build-windows:
   stage: build
   script:
     - *build
