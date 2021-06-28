@@ -1,0 +1,153 @@
+stages:
+  - prebuild
+  - build
+  - release
+  - deploy
+
+.build-env-linux: &build-env-linux |
+  apt-get update
+  apt-get install -y libsodium-dev
+  curl -O https://download.joinself.com/olm/libself-olm_0.1.28_amd64.deb
+  curl -O https://download.joinself.com/omemo/libself-omemo_0.1.12_amd64.deb
+  apt-get install -y ./libself-olm_0.1.28_amd64.deb ./libself-omemo_0.1.12_amd64.deb
+
+.build-env-mac: &build-env-mac |
+  export NVM_DIR="$HOME/.nvm"
+  . $(brew --prefix)/opt/nvm/nvm.sh
+
+.build-env-windows: &build-env-windows |
+  invoke-webrequest https://static.joinself.com/self-crypto/self-crypto-windows-dependencies.zip -outfile deps.zip
+  expand-archive deps.zip .
+
+.deploy-env: &deploy-env |
+  export SCRIPTS_DIR=$(mktemp -d)
+  git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
+
+.unit-test: &unit-test |
+  yarn install
+  yarn test
+
+.build: &build |
+  yarn install
+  yarn prebuild
+
+.git-release: &git-release |
+  version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
+  current_git_tag=$(git ls-remote -q --tags https://github.com/joinself/${CI_PROJECT_NAME} | sort -t / -k 3 -V | grep -v '{}' | tail -n 1 | awk -F / '{print $3}')
+  subject=$(git log -n 1 --format=%s)
+  body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
+
+  if [[ -z ${body} ]]; then
+    release_notes="- ${subject}"
+  else
+    release_notes="${body}"
+  fi
+
+  if [[ "${version}" != "${current_git_tag}" ]]; then
+    git remote set-url origin https://github.com/joinself/${CI_PROJECT_NAME}
+    git tag -a ${version} -m "${version}"
+    git push origin ${version}
+    gh release create "${version}" --notes "${release_notes}"
+  else
+    echo "Version hasn't changed. Nothing to do here."
+  fi
+
+.deploy-npm: &deploy-npm |
+  apt-get -y install python3
+
+  version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
+
+  if ! npm view self-crypto versions | grep $version; then
+    npm publish --access public --dry-run
+    ${SCRIPTS_DIR}/slack-release-notification -n joinself -v ${version}
+  else
+    echo "Package version already exists. Nothing to do here."
+  fi
+
+unit-test-linux:
+  stage: prebuild
+  image: node:15.14.0-buster
+  script:
+    - *build-env-linux
+    - *unit-test
+  only:
+    - branches
+
+unit-test-mac:
+  stage: prebuild
+  script:
+    - *build-env-mac
+    - *unit-test
+  only:
+    - branches
+  tags:
+    - mac
+
+unit-test-windows:
+  stage: prebuild
+  script:
+    - *build-env-windows
+    - *unit-test
+  allow_failure: true
+  only:
+    - branches
+  tags:
+    - windows
+
+build-linux:
+  stage: build
+  image: node:15.14.0-buster
+  script:
+    - *build-env-linux
+    - *build
+  artifacts:
+    paths:
+      - prebuilds
+  only:
+    - branches
+
+build-mac:
+  stage: build
+  script:
+    - *build-env-mac
+    - *build
+  artifacts:
+    paths:
+      - prebuilds
+  only:
+    - branches
+  tags:
+    - mac
+
+build-windows:
+  stage: build
+  script:
+    - *build-env-windows
+    - *build
+  artifacts:
+    paths:
+      - prebuilds
+  only:
+    - branches
+  tags:
+    - windows
+
+release:
+  stage: release
+  image: eu.gcr.io/principal-oxide-204416/deploy
+  script:
+    - *deploy-env
+    - ${SCRIPTS_DIR}/git-setup
+    - *git-release
+  only:
+    - master
+
+npm:
+  stage: deploy
+  image: node:15.14.0-buster
+  script:
+    - *deploy-env
+    - ${SCRIPTS_DIR}/npm-setup
+    - *deploy-npm
+  only:
+    - master
