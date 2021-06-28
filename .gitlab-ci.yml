@@ -15,6 +15,7 @@ stages:
   . $(brew --prefix)/opt/nvm/nvm.sh
 
 .unit-test: &unit-test |
+  yarn install
   yarn test
 
 .build: &build |
