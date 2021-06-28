@@ -14,6 +14,7 @@ stages:
   . $(brew --prefix)/opt/nvm/nvm.sh
 
 .build: &build |
+  yarn install
   yarn prebuild
 
 .deploy-github: &deploy-github |
