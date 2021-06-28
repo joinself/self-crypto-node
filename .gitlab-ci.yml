@@ -15,7 +15,7 @@ stages:
   . $(brew --prefix)/opt/nvm/nvm.sh
 
 .build-env-windows: &build-env-windows |
-  wget https://static.joinself.com/self-crypto/self-crypto-windows-dependencies.zip -outfile deps.zip
+  invoke-webrequest https://static.joinself.com/self-crypto/self-crypto-windows-dependencies.zip -outfile deps.zip
   expand-archive deps.zip .
 
 .unit-test: &unit-test |
