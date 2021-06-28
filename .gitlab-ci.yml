@@ -84,10 +84,9 @@ build-linux:
   script:
     - *build-env-linux
     - *build
-    - cp -r prebuilds/linux-x64 .artifacts
   artifacts:
     paths:
-      - .artifacts
+      - prebuilds
   only:
     - branches
 
@@ -96,10 +95,9 @@ build-mac:
   script:
     - *build-env-mac
     - *build
-    - cp -r prebuilds/darwin-x64 .artifacts
   artifacts:
     paths:
-      - .artifacts
+      - prebuilds
   only:
     - branches
   tags:
@@ -110,10 +108,9 @@ build-windows:
   script:
     - *build-env-windows
     - *build
-    - cp -r prebuilds/win32-x64 .artifacts
   artifacts:
     paths:
-      - .artifacts
+      - prebuilds
   only:
     - branches
   tags:
@@ -123,10 +120,10 @@ npm:
   stage: deploy
   image: node:15.14.0-buster
   script:
-    - ls -lah .artifacts
-    - ls -lah .artifacts/linux-x64
-    - ls -lah .artifacts/darwin-x64
-    - ls -lah .artifacts/win32-x64
+    - ls -lah prebuilds
+    - ls -lah prebuilds/linux-x64
+    - ls -lah prebuilds/darwin-x64
+    - ls -lah prebuilds/win32-x64
     - npm -v
     - exit 0
     - export SCRIPTS_DIR=$(mktemp -d)
