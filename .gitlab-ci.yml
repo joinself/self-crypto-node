@@ -72,6 +72,7 @@ unit-test-windows:
   script:
     - *build-env-windows
     - *unit-test
+  allow_failure: true
   only:
     - branches
   tags:
