@@ -1,4 +1,5 @@
 stages:
+  - prebuild
   - build
   - deploy
 
@@ -12,6 +13,9 @@ stages:
 .build-env-mac: &build-env-mac |
   export NVM_DIR="$HOME/.nvm"
   . $(brew --prefix)/opt/nvm/nvm.sh
+
+.unit-test: &unit-test |
+  yarn test
 
 .build: &build |
   yarn install
@@ -39,6 +43,15 @@ stages:
     echo "Version hasn't changed. Nothing to do here."
   fi
 
+unit-test-linux:
+  stage: prebuild
+  image: node:15.14.0-buster
+  script:
+    - *build-env-linux
+    - *build
+  only:
+    - branches
+
 build-linux:
   stage: build
   image: node:15.14.0-buster
@@ -46,7 +59,7 @@ build-linux:
     - ls -lah
     - *build-env-linux
     - *build
-    - ls -lah
+    - ls -lah prebuilds
   artifacts:
     paths:
       - release
