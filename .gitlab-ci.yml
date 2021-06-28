@@ -100,7 +100,7 @@ build-windows:
   script:
     - *build-env-windows
     - *build
-    - ls prebuilds
+    - ls prebuilds/win32-x64
   artifacts:
     paths:
       - release
