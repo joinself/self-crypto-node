@@ -13,6 +13,8 @@ stages:
   curl -O https://download.joinself.com/omemo/libself-omemo-0.1.12-linux-x86_64.tar.gz
   tar -zxvf libself-olm-0.1.28-linux-x86_64.tar.gz
   tar -zxvf libself-omemo-0.1.12-linux-x86_64.tar.gz
+  pwd
+  ls
   mkdir libraries
   mv self-omemo-linux-x86_64/libself_omemo.so libraries
   mv self-olm-linux-x86_64/libself_olm.* libraries
