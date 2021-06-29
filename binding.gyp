@@ -54,7 +54,7 @@
           "OS=='mac'",
           {
             "libraries": [
-              "-l<(module_root_dir)/libraries/sodium.dylib",
+              "-l<(module_root_dir)/libraries/libsodium.dylib",
               "-l<(module_root_dir)/libraries/libself_olm.dylib",
               "-l<(module_root_dir)/libraries/libself_omemo.dylib",
             ],
