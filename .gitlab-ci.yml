@@ -8,7 +8,14 @@ stages:
   apt-get update
   apt-get install -y libsodium-dev
   curl -O https://download.joinself.com/olm/libself-olm_0.1.28_amd64.deb
+  curl -O https://download.joinself.com/olm/libself-olm-0.1.28-linux-x86_64.tar.gz
   curl -O https://download.joinself.com/omemo/libself-omemo_0.1.12_amd64.deb
+  curl -O https://download.joinself.com/omemo/libself-omemo-0.1.12-linux-x86_64.tar.gz
+  tar -zxvf libself-olm-0.1.28-linux-x86_64.tar.gz
+  tar -zxvf libself-omemo-0.1.12-linux-x86_64.tar.gz
+  mkdir libraries
+  mv self-omemo-linux-x86_64/libself_omemo.so libraries
+  mv self-olm-linux-x86_64/libself_olm.* libraries
   apt-get install -y ./libself-olm_0.1.28_amd64.deb ./libself-omemo_0.1.12_amd64.deb
 
 .build-env-mac: &build-env-mac |

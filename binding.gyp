@@ -17,9 +17,31 @@
           "OS=='linux'",
           {
             "libraries": [
-              "-lsodium",
-              "-lself_olm",
-              "-lself_omemo"
+               "-l<(module_root_dir)/libraries/sodium.so",
+               "-l<(module_root_dir)/libraries/self_olm.so",
+               "-l<(module_root_dir)/libraries/self_omemo.so",
+            ],
+            "copies": [
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libsodium.so" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/self_olm.so" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/self_olm.so.3" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/self_olm.so.3.1.4" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/self_omemo.so" ]
+              }
             ],
             "link_settings": {
               "include_dirs": [
@@ -32,9 +54,23 @@
           "OS=='mac'",
           {
             "libraries": [
-              "-lsodium",
-              "-lself_olm",
-              "-lself_omemo"
+              "-l<(module_root_dir)/libraries/sodium.dylib",
+              "-l<(module_root_dir)/libraries/self_olm.dylib",
+              "-l<(module_root_dir)/libraries/self_omemo.dylib",
+            ],
+            "copies": [
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libsodium.dylib" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/self_olm.dylib" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/self_omemo.dylib" ]
+              }
             ],
             "link_settings": {
               "include_dirs": [
@@ -47,10 +83,10 @@
           "OS=='win'",
           {
             "libraries": [
-                "-l<(module_root_dir)/libraries/sodium.lib",
-                "-l<(module_root_dir)/libraries/self_olm.lib",
-                "-l<(module_root_dir)/libraries/self_omemo.lib",
-                "-lmincore.lib"
+              "-l<(module_root_dir)/libraries/sodium.lib",
+              "-l<(module_root_dir)/libraries/self_olm.lib",
+              "-l<(module_root_dir)/libraries/self_omemo.lib",
+              "-lmincore.lib"
             ],
             "copies": [
               {
