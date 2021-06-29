@@ -13,13 +13,14 @@ stages:
   curl -O https://download.joinself.com/omemo/libself-omemo-0.1.12-linux-x86_64.tar.gz
   tar -zxvf libself-olm-0.1.28-linux-x86_64.tar.gz
   tar -zxvf libself-omemo-0.1.12-linux-x86_64.tar.gz
-  pwd
-  ls
   mkdir libraries
   mv self-omemo-linux-x86_64/libself_omemo.so libraries
   mv self-olm-linux-x86_64/libself_olm.* libraries
   cp /usr/lib/x86_64-linux-gnu/libsodium.* libraries
   apt-get install -y ./libself-olm_0.1.28_amd64.deb ./libself-omemo_0.1.12_amd64.deb
+  pwd
+  ls
+  ls libraries
 
 .build-env-mac: &build-env-mac |
   export NVM_DIR="$HOME/.nvm"
