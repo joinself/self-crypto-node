@@ -58,8 +58,8 @@ stages:
   version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
 
   if ! npm view self-crypto versions | grep $version; then
-    npm publish --access public --dry-run
-    #${SCRIPTS_DIR}/slack-release-notification -n joinself -v ${version}
+    npm publish
+    ${SCRIPTS_DIR}/slack-release-notification -n joinself -v ${version}
   else
     echo "Package version already exists. Nothing to do here."
   fi
@@ -140,7 +140,7 @@ release:
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
   only:
-    - branches
+    - master
 
 npm:
   stage: deploy
@@ -150,4 +150,4 @@ npm:
     - ${SCRIPTS_DIR}/npm-setup
     - *deploy-npm
   only:
-    - branches
+    - master
