@@ -32,6 +32,7 @@ stages:
   cp /usr/local/Cellar/libself-olm/0.1.28/lib/libself_olm.* libraries
   cp /usr/local/Cellar/libself-omemo/0.1.2/lib/libself_omemo.* libraries
   cp /usr/local/Cellar/libsodium/1.0.18_1/lib/libsodium.* libraries
+  ls libraries
 
 .build-env-windows: &build-env-windows |
   invoke-webrequest https://static.joinself.com/self-crypto/self-crypto-windows-dependencies.zip -outfile deps.zip
