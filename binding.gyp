@@ -17,9 +17,9 @@
           "OS=='linux'",
           {
             "libraries": [
-               "-l<(module_root_dir)/libraries/libsodium.so",
-               "-l<(module_root_dir)/libraries/libself_olm.so",
-               "-l<(module_root_dir)/libraries/libself_omemo.so",
+               "-L<(module_root_dir)/libraries/ -l:libsodium.so",
+               "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
+               "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
             ],
             "copies": [
               {
