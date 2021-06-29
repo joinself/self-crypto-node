@@ -26,6 +26,7 @@ stages:
   export NVM_DIR="$HOME/.nvm"
   . $(brew --prefix)/opt/nvm/nvm.sh
   mkdir libraries
+  ls /usr/local/Cellar
   cp /usr/local/Cellar/libself-olm/0.1.28/lib/libself_olm.* libraries
   cp /usr/local/Cellar/libself-omemo/0.1.12/lib/libself_omemo.* libraries
   cp /usr/local/Cellar/libsodium/1.0.18_1/lib/libsodium.* libraries
