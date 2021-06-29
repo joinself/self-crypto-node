@@ -33,13 +33,9 @@ stages:
 
 .git-release: &git-release |
   version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
-  echo hit1
   current_git_tag=$(git ls-remote -q --tags https://github.com/joinself/${CI_PROJECT_NAME} | sort -t / -k 3 -V | grep -v '{}' | tail -n 1 | awk -F / '{print $3}')
-  echo hit2
   subject=$(git log -n 1 --format=%s)
-  echo hit3
   body=$(git log -n 1 --format=%b | grep -E '^\*|^-' | sed 's/^*/-/g') || true
-  echo hit4
 
   if [[ -z ${body} ]]; then
     release_notes="- ${subject}"
