@@ -17,9 +17,9 @@
           "OS=='linux'",
           {
             "libraries": [
-               "-l<(module_root_dir)/libraries/sodium.so",
-               "-l<(module_root_dir)/libraries/self_olm.so",
-               "-l<(module_root_dir)/libraries/self_omemo.so",
+               "-l<(module_root_dir)/libraries/libsodium.so",
+               "-l<(module_root_dir)/libraries/libself_olm.so",
+               "-l<(module_root_dir)/libraries/libself_omemo.so",
             ],
             "copies": [
               {
@@ -28,19 +28,19 @@
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/self_olm.so" ]
+                "files": [ "<(module_root_dir)/libraries/libself_olm.so" ]
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/self_olm.so.3" ]
+                "files": [ "<(module_root_dir)/libraries/libself_olm.so.3" ]
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/self_olm.so.3.1.4" ]
+                "files": [ "<(module_root_dir)/libraries/libself_olm.so.3.1.4" ]
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/self_omemo.so" ]
+                "files": [ "<(module_root_dir)/libraries/libself_omemo.so" ]
               }
             ],
             "link_settings": {
@@ -55,8 +55,8 @@
           {
             "libraries": [
               "-l<(module_root_dir)/libraries/sodium.dylib",
-              "-l<(module_root_dir)/libraries/self_olm.dylib",
-              "-l<(module_root_dir)/libraries/self_omemo.dylib",
+              "-l<(module_root_dir)/libraries/libself_olm.dylib",
+              "-l<(module_root_dir)/libraries/libself_omemo.dylib",
             ],
             "copies": [
               {
@@ -65,11 +65,19 @@
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/self_olm.dylib" ]
+                "files": [ "<(module_root_dir)/libraries/libself_olm.dylib" ]
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/self_omemo.dylib" ]
+                "files": [ "<(module_root_dir)/libraries/libself_olm.3.dylib" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libself_olm.3.1.4.dylib" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libself_omemo.dylib" ]
               }
             ],
             "link_settings": {
