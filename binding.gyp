@@ -65,6 +65,10 @@
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libsodium.23.dylib" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
                 "files": [ "<(module_root_dir)/libraries/libself_olm.dylib" ]
               },
               {
