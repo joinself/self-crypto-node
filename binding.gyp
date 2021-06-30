@@ -17,11 +17,13 @@
           "OS=='linux'",
           {
             "libraries": [
-               #"-L<(module_root_dir)/libraries/ -l:libsodium.so",
-               #"-L<(module_root_dir)/libraries/ -l:libself_olm.so",
-               #"-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
-              "-Wl,-rpath=\\$$ORIGIN"
+              "-L<(module_root_dir)/libraries/ -l:libsodium.so",
+              "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
+              "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
             ],
+            "link_settings": {
+              "libraries": [ "-Wl,-rpath=\\$$ORIGIN"],
+            },
             "copies": [
               {
                 "destination": "<(module_root_dir)/build/Release/",
