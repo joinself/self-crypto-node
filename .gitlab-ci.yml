@@ -34,6 +34,9 @@ stages:
   install_name_tool -id "@loader_path/libsodium.23.dylib" libsodium.23.dylib
   install_name_tool -id "@loader_path/libself_olm.3.dylib" libself_olm.3.dylib
   install_name_tool -id "@loader_path/libself_omemo.dylib" libself_omemo.dylib
+  install_name_tool -change /usr/local/opt/libsodium/lib/libsodium.23.dylib "@loader_path/libsodium.23.dylib" libself_olm.3.dylib
+  install_name_tool -change /usr/local/opt/libsodium/lib/libsodium.23.dylib "@loader_path/libsodium.23.dylib" libself_omemo.dylib
+  install_name_tool -change /usr/local/opt/libself-olm/lib/libself_olm.3.dylib "@loader_path/libself_olm.3.dylib" libself_omemo.dylib
   install_name_tool -change /usr/local/opt/libsodium/lib/libsodium.23.dylib "@loader_path/libsodium.23.dylib" electron.napi.node
   install_name_tool -change /usr/local/opt/libself-olm/lib/libself_olm.3.dylib "@loader_path/libself_olm.3.dylib" electron.napi.node
   install_name_tool -change /usr/local/opt/libself-omemo/lib/libself_omemo.dylib "@loader_path/libself_omemo.dylib" electron.napi.node
