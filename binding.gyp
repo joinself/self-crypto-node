@@ -22,7 +22,7 @@
               "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
             ],
             "link_settings": {
-              "libraries": [ "-Wl,-rpath=\\$$ORIGIN/prebuilds/linux-x64"],
+              "libraries": [ "-Wl,-rpath=\\$$ORIGIN"],
             },
             "copies": [
               {
