@@ -31,12 +31,12 @@ stages:
 
 .update-links-mac: &update-links-mac |
   cd prebuilds/darwin-x64
-  install_name_tool -change /usr/local/opt/libsodium/lib/libsodium.23.dylib @loader_path/libsodium.23.dylib electron.napi.node
-  install_name_tool -change /usr/local/opt/libself-olm/lib/libself_olm.3.dylib @loader_path/libself_olm.3.dylib electron.napi.node
-  install_name_tool -change /usr/local/opt/libself-omemo/lib/libself_omemo.dylib @loader_path/libself_omemo.dylib electron.napi.node
-  install_name_tool -change /usr/local/opt/libsodium/lib/libsodium.23.dylib @loader_path/libsodium.23.dylib node.napi.node
-  install_name_tool -change /usr/local/opt/libself-olm/lib/libself_olm.3.dylib @loader_path/libself_olm.3.dylib node.napi.node
-  install_name_tool -change /usr/local/opt/libself-omemo/lib/libself_omemo.dylib @loader_path/libself_omemo.dylib node.napi.node
+  install_name_tool -change /usr/local/opt/libsodium/lib/libsodium.23.dylib @loader_path/prebuilds/darwin-64/libsodium.23.dylib electron.napi.node
+  install_name_tool -change /usr/local/opt/libself-olm/lib/libself_olm.3.dylib @loader_path/prebuilds/darwin-64/libself_olm.3.dylib electron.napi.node
+  install_name_tool -change /usr/local/opt/libself-omemo/lib/libself_omemo.dylib @loader_path/prebuilds/darwin-64/libself_omemo.dylib electron.napi.node
+  install_name_tool -change /usr/local/opt/libsodium/lib/libsodium.23.dylib @loader_path/prebuilds/darwin-64/libsodium.23.dylib node.napi.node
+  install_name_tool -change /usr/local/opt/libself-olm/lib/libself_olm.3.dylib @loader_path/prebuilds/darwin-64/libself_olm.3.dylib node.napi.node
+  install_name_tool -change /usr/local/opt/libself-omemo/lib/libself_omemo.dylib @loader_path/prebuilds/darwin-64/libself_omemo.dylib node.napi.node
 
 .build-env-windows: &build-env-windows |
   invoke-webrequest https://static.joinself.com/self-crypto/self-crypto-windows-dependencies.zip -outfile deps.zip
