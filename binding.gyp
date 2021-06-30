@@ -55,8 +55,8 @@
           {
             "libraries": [
               "-L<(module_root_dir)/libraries/ -lsodium",
-              "-L<(module_root_dir)/libraries/ -l:libself_olm.dylib",
-              "-L<(module_root_dir)/libraries/ -l:libself_omemo.dylib",
+              "-L<(module_root_dir)/libraries/ -lself_olm",
+              "-L<(module_root_dir)/libraries/ -lself_omemo",
             ],
             "copies": [
               {
