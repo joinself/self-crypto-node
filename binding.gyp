@@ -17,10 +17,13 @@
           "OS=='linux'",
           {
             "libraries": [
-               "-L<(module_root_dir)/libraries/ -l:libsodium.so",
-               "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
-               "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
+              "-L<(module_root_dir)/libraries/ -l:libsodium.so",
+              "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
+              "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
             ],
+            "link_settings": {
+              "libraries": [ "-Wl,-rpath=\\$$ORIGIN"],
+            },
             "copies": [
               {
                 "destination": "<(module_root_dir)/build/Release/",
@@ -62,6 +65,10 @@
               {
                 "destination": "<(module_root_dir)/build/Release/",
                 "files": [ "<(module_root_dir)/libraries/libsodium.dylib" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libsodium.23.dylib" ]
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
