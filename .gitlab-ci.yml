@@ -1,8 +1,17 @@
 stages:
-  - prebuild
+  - pretest
+  - test
   - build
   - release
   - deploy
+
+.start-runners: &start-runners |
+  export SCRIPTS_DIR=$(mktemp -d)
+  git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
+  echo ${GCP_SA_CI} | base64 -d > /tmp/gcp-sa-ci.json
+  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-ci.json
+  pip install -r ${SCRIPTS_DIR}/requirements.txt
+  ${SCRIPTS_DIR}/gcp-start-instance -p principal-oxide-204416 -z europe-west2-c -i gitlab-runner-windows
 
 .build-env-linux: &build-env-linux |
   apt-get update
@@ -93,8 +102,16 @@ stages:
     echo "Package version already exists. Nothing to do here."
   fi
 
+start-runners:
+  stage: pretest
+  image: python:3.9.6
+  script:
+    - *start-runners
+  only:
+    - branches
+
 unit-test-linux:
-  stage: prebuild
+  stage: test
   image: node:15.14.0-buster
   script:
     - *build-env-linux
@@ -103,7 +120,7 @@ unit-test-linux:
     - branches
 
 unit-test-mac:
-  stage: prebuild
+  stage: test
   script:
     - *build-env-mac
     - *unit-test
@@ -113,7 +130,7 @@ unit-test-mac:
     - mac
 
 unit-test-windows:
-  stage: prebuild
+  stage: test
   script:
     - *build-env-windows
     - *unit-test
