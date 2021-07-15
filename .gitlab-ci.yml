@@ -181,7 +181,7 @@ build-windows:
 
 release:
   stage: release
-  image: eu.gcr.io/principal-oxide-204416/deploy
+  image: eu.gcr.io/principal-oxide-204416/tools
   script:
     - *deploy-env
     - ${SCRIPTS_DIR}/git-setup
