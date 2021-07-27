@@ -127,7 +127,7 @@ unit-test-mac:
   only:
     - branches
   tags:
-    - mac
+    - mac-shell
 
 unit-test-windows:
   stage: test
@@ -138,7 +138,7 @@ unit-test-windows:
   only:
     - branches
   tags:
-    - windows
+    - windows-shell
 
 build-linux:
   stage: build
@@ -164,7 +164,7 @@ build-mac:
   only:
     - branches
   tags:
-    - mac
+    - mac-shell
 
 build-windows:
   stage: build
@@ -177,7 +177,7 @@ build-windows:
   only:
     - branches
   tags:
-    - windows
+    - windows-shell
 
 release:
   stage: release
