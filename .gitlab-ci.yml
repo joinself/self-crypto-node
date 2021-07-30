@@ -24,8 +24,8 @@ stages:
   mkdir includes
   mv self-omemo-linux-x86_64/libself_omemo.so libraries
   mv self-olm-linux-x86_64/libself_olm.* libraries
-  mv self-omemo-linux-x86_64/*.h includes
-  mv self-olm-linux-x86_64/
+  mv self-omemo-linux-x86_64/include/*.h includes
+  mv self-olm-linux-x86_64/include/self_olm includes
   cp /usr/lib/x86_64-linux-gnu/libsodium.* libraries
   cp /usr/include/sodium.h includes
   cp -r /usr/include/sodium includes
