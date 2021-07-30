@@ -21,9 +21,15 @@ stages:
   tar -zxvf libself-olm-0.1.28-linux-x86_64.tar.gz
   tar -zxvf libself-omemo-0.1.12-linux-x86_64.tar.gz
   mkdir libraries
+  mkdir includes
   mv self-omemo-linux-x86_64/libself_omemo.so libraries
   mv self-olm-linux-x86_64/libself_olm.* libraries
+  mv self-omemo-linux-x86_64/*.h includes
+  mv self-olm-linux-x86_64/
   cp /usr/lib/x86_64-linux-gnu/libsodium.* libraries
+  cp /usr/include/sodium.h includes
+  cp -r /usr/include/sodium includes
+  apt-get remove libsodium-dev
 
 .build-env-mac: &build-env-mac |
   export NVM_DIR="$HOME/.nvm"
