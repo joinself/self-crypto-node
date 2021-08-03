@@ -17,7 +17,7 @@
     "dev": "node-gyp rebuild",
     "install": "node-gyp-build",
     "test": "standard && tape tests/*.js",
-    "prebuild": "prebuildify --napi --electron-compat"
+    "prebuild": "prebuildify --napi --strip --electron-compat"
   },
   "repository": {
     "type": "git",

@@ -1,16 +1,6 @@
 {
   "targets": [
     {
-      "target_name": "action_before_build",
-      "type": "none",
-      "copies": [
-        {
-          "files": [ "<(module_root_dir)/libraries/libsodium.so", "<(module_root_dir)/libraries/libself_olm.so", "<(module_root_dir)/libraries/libself_olm.so.3.1.4", "<(module_root_dir)/libraries/libself_omemo.so" ],
-          "destination": "<(PRODUCT_DIR)"
-        },
-      ]
-    },
-    {
       "target_name": "native",
       "sources": [
         "binding.cc"
@@ -27,11 +17,9 @@
           "OS=='linux'",
           {
             "libraries": [
-              "-L<(module_root_dir)/build/Release -l:libsodium.so",
-              "-L<(module_root_dir)/build/Release -l:libself_olm.so",
-              "-L<(module_root_dir)/build/Release -l:libself_olm.so.3",
-              "-L<(module_root_dir)/build/Release -l:libself_olm.so.3.1.4",
-              "-L<(module_root_dir)/build/Release -l:libself_omemo.so",
+              "-L<(module_root_dir)/libraries/ -l:libsodium.so",
+              "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
+              "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
             ],
             #"ldflags": [
             #  "-Wl,-rpath,'$$ORIGIN'"
