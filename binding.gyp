@@ -21,13 +21,18 @@
               "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
               "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
             ],
-            #"ldflags": [
-            #  "-Wl,-rpath,'$$ORIGIN'"
-            #],
             "copies": [
               {
                 "destination": "<(module_root_dir)/build/Release/",
                 "files": [ "<(module_root_dir)/libraries/libsodium.so" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libsodium.so.23" ]
+              },
+              {
+                "destination": "<(module_root_dir)/build/Release/",
+                "files": [ "<(module_root_dir)/libraries/libsodium.so.23.2.0" ]
               },
               {
                 "destination": "<(module_root_dir)/build/Release/",
