@@ -21,9 +21,9 @@
               "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
               "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
             ],
-            "link_settings": {
-              "libraries": [ "-Wl,-rpath=\\$$ORIGIN/prebuilds/linux-x64"],
-            },
+            #"ldflags": [
+            #  "-Wl,-rpath,'$$ORIGIN'"
+            #],
             "copies": [
               {
                 "destination": "<(module_root_dir)/build/Release/",
@@ -47,8 +47,10 @@
               }
             ],
             "link_settings": {
+              "libraries": [ "-Wl,-rpath=\\$$ORIGIN"],
               "include_dirs": [
-                "<!(node -p \"require('node-addon-api').include_dir\")"
+                "<!(node -p \"require('node-addon-api').include_dir\")",
+                "includes"
               ]
             }
           }
