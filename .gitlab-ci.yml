@@ -5,14 +5,6 @@ stages:
   - release
   - deploy
 
-.start-runners: &start-runners |
-  export SCRIPTS_DIR=$(mktemp -d)
-  git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
-  echo ${GCP_SA_CI} | base64 -d > /tmp/gcp-sa-ci.json
-  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-sa-ci.json
-  pip install -r ${SCRIPTS_DIR}/requirements.txt
-  ${SCRIPTS_DIR}/gcp-start-instance -p principal-oxide-204416 -z europe-west2-c -i gitlab-runner-windows
-
 .build-env-linux: &build-env-linux |
   apt-get update
   apt-get install -y libsodium-dev
@@ -105,14 +97,6 @@ stages:
     echo "Package version already exists. Nothing to do here."
   fi
 
-start-runners:
-  stage: pretest
-  image: python:3.9.6
-  script:
-    - *start-runners
-  only:
-    - branches
-
 unit-test-linux:
   stage: test
   image: node:15.14.0-buster
@@ -134,6 +118,7 @@ unit-test-mac:
 
 unit-test-windows:
   stage: test
+  image: eu.gcr.io/principal-oxide-204416/windows-build
   script:
     - *build-env-windows
     - *unit-test
@@ -141,7 +126,7 @@ unit-test-windows:
   only:
     - branches
   tags:
-    - windows-shell
+    - windows-docker-new
 
 build-linux:
   stage: build
@@ -171,6 +156,7 @@ build-mac:
 
 build-windows:
   stage: build
+  image: eu.gcr.io/principal-oxide-204416/windows-build
   script:
     - *build-env-windows
     - *build
@@ -180,7 +166,7 @@ build-windows:
   only:
     - branches
   tags:
-    - windows-shell
+    - windows-docker-new
 
 release:
   stage: release
