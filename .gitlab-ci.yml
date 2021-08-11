@@ -126,7 +126,7 @@ unit-test-windows:
   only:
     - branches
   tags:
-    - windows-docker-new
+    - windows-docker
 
 build-linux:
   stage: build
@@ -166,7 +166,7 @@ build-windows:
   only:
     - branches
   tags:
-    - windows-docker-new
+    - windows-docker
 
 release:
   stage: release
