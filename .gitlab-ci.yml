@@ -23,6 +23,16 @@ stages:
   cp -r /usr/include/sodium includes
   apt-get remove -y libsodium23 libsodium-dev
 
+.build-env-apple-silicon: &build-env-apple-silicon |
+  export NVM_DIR="$HOME/.nvm"
+  . $(brew --prefix)/opt/nvm/nvm.sh
+  mkdir libraries
+  cp /usr/local/Cellar/libself-olm/0.1.28/lib/libself_olm.* libraries
+  cp /usr/local/Cellar/libself-omemo/0.1.2/lib/libself_omemo.* libraries
+  cp /usr/local/Cellar/libsodium/1.0.18_1/lib/libsodium.* libraries
+  chmod 755 libraries/*.dylib
+  chmod 755 libraries/*.a
+
 .build-env-mac: &build-env-mac |
   export NVM_DIR="$HOME/.nvm"
   . $(brew --prefix)/opt/nvm/nvm.sh
@@ -144,6 +154,20 @@ build-mac:
   stage: build
   script:
     - *build-env-mac
+    - *build
+    - *update-links-mac
+  artifacts:
+    paths:
+      - prebuilds
+  only:
+    - branches
+  tags:
+    - mac-shell
+
+build-apple-silicon:
+  stage: build
+  script:
+    - *build-env-apple-silicon
     - *build
     - *update-links-mac
   artifacts:
