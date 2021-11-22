@@ -55,9 +55,6 @@ stages:
   export SCRIPTS_DIR=$(mktemp -d)
   git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
 
-.git-leak: &git-leak |
-  docker run -v ${PWD}:/repo zricethezav/gitleaks --path=/repo --redact -v
-
 .unit-test: &unit-test |
   yarn install
   yarn test
@@ -108,7 +105,7 @@ git-leak:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   script:
-    - *git-leak
+    - docker run -v ${PWD}:/repo zricethezav/gitleaks --path=/repo --redact -v
   only:
     - branches
 
