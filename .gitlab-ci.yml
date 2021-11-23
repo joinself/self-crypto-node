@@ -96,7 +96,7 @@ stages:
     echo "Package version already exists. Nothing to do here."
   fi
 
-git-leak:
+secrets-check:
   stage: prebuild
   image: docker:stable-git
   services:
@@ -105,7 +105,9 @@ git-leak:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   script:
-    - docker run -v ${PWD}:/repo zricethezav/gitleaks --path=/repo --redact -v
+    - SCRIPTS_DIR=$(mktemp -d)
+    - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
+    - ${SCRIPTS_DIR}/git-secrets
   only:
     - branches
 
