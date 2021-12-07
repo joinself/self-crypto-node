@@ -190,7 +190,7 @@ release:
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
   only:
-    - master
+    - main
 
 npm:
   stage: deploy
@@ -200,4 +200,4 @@ npm:
     - ${SCRIPTS_DIR}/npm-setup
     - *deploy-npm
   only:
-    - master
+    - main
