@@ -1,7 +1,8 @@
 {
   "name": "self-crypto",
-  "version": "1.0.26",
+  "version": "1.0.28",
   "description": "A package for end to end encryption on the self network",
+  "license": "MIT",
   "main": "index.js",
   "files": ["prebuilds/*", "binding.cc", "binding.gyp", "yarn.lock"],
   "dependencies": {
