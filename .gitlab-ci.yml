@@ -120,6 +120,7 @@ license:
     - ${SCRIPTS_DIR}/git-setup
     - npm install
     - ${SCRIPTS_DIR}/license-check
+  allow_failure: true
   only:
     - branches
 
