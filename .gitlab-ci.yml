@@ -4,6 +4,11 @@ stages:
   - release
   - deploy
 
+.rules:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE =~ /external_pull_request_event|web/
+
 .build-env-linux: &build-env-linux |
   apt-get update
   apt-get install -y libsodium-dev
@@ -105,11 +110,11 @@ secrets-check:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   script:
-    - SCRIPTS_DIR=$(mktemp -d)
+    - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
     - ${SCRIPTS_DIR}/git-secrets
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 license:
   stage: prebuild
@@ -121,8 +126,8 @@ license:
     - npm install
     - ${SCRIPTS_DIR}/license-check
   allow_failure: true
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 unit-test-linux:
   stage: prebuild
@@ -130,16 +135,16 @@ unit-test-linux:
   script:
     - *build-env-linux
     - *unit-test
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 unit-test-mac:
   stage: prebuild
   script:
     - *build-env-mac
     - *unit-test
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
   tags:
     - mac-shell
 
@@ -150,8 +155,8 @@ unit-test-windows:
     - *build-env-windows
     - *unit-test
   allow_failure: true
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
   tags:
     - windows-docker
 
@@ -164,8 +169,8 @@ build-linux:
   artifacts:
     paths:
       - prebuilds
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
 
 build-mac:
   stage: build
@@ -176,8 +181,8 @@ build-mac:
   artifacts:
     paths:
       - prebuilds
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
   tags:
     - mac-shell
 
@@ -190,8 +195,8 @@ build-windows:
   artifacts:
     paths:
       - prebuilds
-  only:
-    - branches
+  rules:
+    - !reference [.rules, rules]
   tags:
     - windows-docker
 
@@ -202,8 +207,8 @@ release:
     - *deploy-env
     - ${SCRIPTS_DIR}/git-setup
     - *git-release
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 npm:
   stage: deploy
@@ -212,5 +217,5 @@ npm:
     - *deploy-env
     - ${SCRIPTS_DIR}/npm-setup
     - *deploy-npm
-  only:
-    - main
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
