@@ -727,6 +727,74 @@ namespace self_crypto {
         return sref;
     }
 
+    napi_value matches_inbound_session(napi_env env, napi_callback_info info) {
+        napi_value argv[2];
+        size_t argc = 2;
+
+        napi_get_cb_info(env, info, & argc, argv, NULL, NULL);
+
+        if (argc < 2) {
+            napi_throw_error(env, "EINVAL", "Too few arguments");
+            return NULL;
+        }
+
+        void * sref;
+        size_t matches;
+        char * ciphertext;
+        size_t ciphertext_len = 0;
+
+        napi_status status = napi_get_value_external(env, argv[0], & sref);
+        if (status != napi_ok) {
+            napi_throw_error(env, "ERROR", "Invalid olm session");
+            return NULL;
+        }
+
+        OlmSession * session = (OlmSession * )(sref);
+
+        // get the size of the ciphertext one time message
+        status = napi_get_value_string_utf8(env, argv[1], NULL, 0, & ciphertext_len);
+        if (status != napi_ok) {
+            napi_throw_error(env, "ERROR", "Invalid one time message ciphertext size");
+            return NULL;
+        }
+
+        // get the ciphertext one time message
+        ciphertext = (char * ) malloc(ciphertext_len + 1);
+        if (ciphertext == NULL) {
+            napi_throw_error(env, "ERROR", "Could not allocate one time message ciphertext buffer");
+            return NULL;
+        }
+
+        status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len + 1, & ciphertext_len);
+        if (status != napi_ok) {
+            napi_throw_error(env, "ERROR", "Invalid one time message ciphertext");
+            return NULL;
+        }
+
+        // check if the session matches the one time key message
+        matches = olm_matches_inbound_session(
+            session,
+            ciphertext,
+            ciphertext_len
+        );
+
+        const char * serr = olm_session_last_error(session);
+        if (strcmp(serr, "SUCCESS") != 0) {
+            napi_throw_error(env, "ERROR", serr);
+            return NULL;
+        }
+
+        napi_value result;
+
+        status = napi_create_uint32(env, matches, &result);
+        if (status != napi_ok) {
+            napi_throw_error(env, "ERROR", "Could not create olm olm matches uint32");
+            return NULL;
+        }
+
+        return result;
+    }
+
     napi_value pickle_session(napi_env env, napi_callback_info info) {
         napi_value result;
         napi_value argv[2];
@@ -1566,6 +1634,7 @@ namespace self_crypto {
         napi_value remove_one_time_keys_fn;
         napi_value create_outbound_session_fn;
         napi_value create_inbound_session_fn;
+        napi_value matches_inbound_session_fn;
         napi_value pickle_session_fn;
         napi_value unpickle_session_fn;
         napi_value encrypt_fn;
@@ -1606,6 +1675,9 @@ namespace self_crypto {
 
         napi_create_function(env, NULL, 0, create_inbound_session, NULL, & create_inbound_session_fn);
         napi_set_named_property(env, exports, "create_inbound_session", create_inbound_session_fn);
+
+        napi_create_function(env, NULL, 0, create_inbound_session, NULL, & matches_inbound_session_fn);
+        napi_set_named_property(env, exports, "matches_inbound_session", matches_inbound_session_fn);
 
         napi_create_function(env, NULL, 0, pickle_session, NULL, & pickle_session_fn);
         napi_set_named_property(env, exports, "pickle_session", pickle_session_fn);
