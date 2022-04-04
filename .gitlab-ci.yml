@@ -15,7 +15,7 @@ stages:
 
 build-windows:
   stage: build
-  image: eu.gcr.io/principal-oxide-204416/windows-build:747d657aef2bcdd01851ae626bd8b5916cbc0453
+  image: eu.gcr.io/principal-oxide-204416/windows-build:58c616e61cf9f6467e67023720f8717692bdda77
   script:
     - *build-env-windows
     - *build
