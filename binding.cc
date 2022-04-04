@@ -729,6 +729,7 @@ namespace self_crypto {
 
     napi_value matches_inbound_session(napi_env env, napi_callback_info info) {
         napi_value argv[2];
+        napi_value result;
         size_t argc = 2;
 
         napi_get_cb_info(env, info, & argc, argv, NULL, NULL);
@@ -771,6 +772,7 @@ namespace self_crypto {
             return NULL;
         }
 
+
         // check if the session matches the one time key message
         matches = olm_matches_inbound_session(
             session,
@@ -783,8 +785,6 @@ namespace self_crypto {
             napi_throw_error(env, "ERROR", serr);
             return NULL;
         }
-
-        napi_value result;
 
         status = napi_create_uint32(env, matches, &result);
         if (status != napi_ok) {
@@ -1676,7 +1676,7 @@ namespace self_crypto {
         napi_create_function(env, NULL, 0, create_inbound_session, NULL, & create_inbound_session_fn);
         napi_set_named_property(env, exports, "create_inbound_session", create_inbound_session_fn);
 
-        napi_create_function(env, NULL, 0, create_inbound_session, NULL, & matches_inbound_session_fn);
+        napi_create_function(env, NULL, 0, matches_inbound_session, NULL, & matches_inbound_session_fn);
         napi_set_named_property(env, exports, "matches_inbound_session", matches_inbound_session_fn);
 
         napi_create_function(env, NULL, 0, pickle_session, NULL, & pickle_session_fn);

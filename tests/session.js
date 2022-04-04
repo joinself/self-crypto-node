@@ -40,7 +40,7 @@ test('session encrypt decrypt test', function (t) {
 })
 
 test('session matches test', function (t) {
-  t.plan(6)
+  t.plan(4)
 
   var aliceAccount = crypto.create_olm_account()
   var bobAccount = crypto.create_olm_account()
@@ -63,7 +63,6 @@ test('session matches test', function (t) {
   t.equal(plaintextForBob, 'hello bob')
 
   var secondCiphertextForBob = crypto.encrypt(sessionWithBob, 'hello bob')
-
   t.equal(crypto.matches_inbound_session(sessionWithAlice, secondCiphertextForBob), 1)
 })
 
