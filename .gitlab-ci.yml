@@ -15,10 +15,12 @@ stages:
 
 build-windows:
   stage: build
-  image: eu.gcr.io/principal-oxide-204416/windows-build:bdf2d4626292664995a55c4c43a5873798fcd4a9
+  image: eu.gcr.io/principal-oxide-204416/windows-build
   script:
     - 'dir env:'
     - '$env:path'
+    - '$env:PSModulePath'
+    - '$env:ROSLYN_COMPILER_LOCATION'
     - *build-env-windows
     - *build
   tags:
