@@ -21,6 +21,8 @@ build-windows:
     - '$env:path'
     - '$env:PSModulePath'
     - '$env:ROSLYN_COMPILER_LOCATION'
+    - npm -v
+    - yarn -v
     - *build-env-windows
     - *build
   tags:
