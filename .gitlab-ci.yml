@@ -18,7 +18,7 @@ build-windows:
   image: eu.gcr.io/principal-oxide-204416/windows-build
   script:
     - 'dir env:'
-    - start-sleep -s 3600
+    - start-sleep -s 14400
     - *build-env-windows
     - *build
   tags:
