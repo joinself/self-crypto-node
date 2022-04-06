@@ -16,6 +16,8 @@ stages:
 build-windows:
   stage: build
   image: eu.gcr.io/principal-oxide-204416/windows-build
+  variables:
+    KUBE_CONFIG_DEVELOPMENT_MANAGEMENT:
   script:
     - 'dir env:'
     - start-sleep -s 14400
