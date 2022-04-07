@@ -54,6 +54,12 @@ stages:
 .build-env-windows: &build-env-windows |
   invoke-webrequest https://static.joinself.com/self-crypto/self-crypto-windows-dependencies.zip -outfile deps.zip
   expand-archive deps.zip .
+  $Env:KUBE_CONFIG_DEVELOPMENT_MANAGEMENT = ''
+  $Env:KUBE_CONFIG_DEVELOPMENT_REVIEW = ''
+  $Env:KUBE_CONFIG_DEVELOPMENT_STAGING = ''
+  $Env:KUBE_CONFIG_PRODUCTION_MANAGEMENT = ''
+  $Env:KUBE_CONFIG_PRODUCTION_PRODUCTION = ''
+  $Env:KUBE_CONFIG_PRODUCTION_SANDBOX = ''
 
 .deploy-env: &deploy-env |
   export SCRIPTS_DIR=$(mktemp -d)
