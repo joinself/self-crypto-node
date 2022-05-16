@@ -3,7 +3,6 @@ workflow:
     - if: $CI_COMMIT_BRANCH
 
 stages:
-  - prebuild
   - build
   - release
   - deploy
@@ -65,12 +64,9 @@ stages:
   export SCRIPTS_DIR=$(mktemp -d)
   git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
 
-.unit-test: &unit-test |
-  yarn install
-  yarn test
-
 .build: &build |
   yarn install
+  yarn test
   yarn prebuild
 
 .git-release: &git-release |
@@ -106,54 +102,24 @@ stages:
     echo "Package version already exists. Nothing to do here."
   fi
 
-secrets-check:
-  stage: prebuild
-  image: docker:stable-git
-  services:
-    - docker:20.10.12-dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+secret-scan:
+  stage: build
+  image:
+    name: zricethezav/gitleaks:v8.2.4
+    entrypoint: [""]
   script:
     - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
-    - ${SCRIPTS_DIR}/git-secrets
+    - ${SCRIPTS_DIR}/git-secret-scan
 
-license:
-  stage: prebuild
+license-compliance:
+  stage: build
   image: licensefinder/license_finder
   script:
     - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
-    - ${SCRIPTS_DIR}/git-setup
-    - npm install
     - ${SCRIPTS_DIR}/license-check
   allow_failure: true
-
-unit-test-linux:
-  stage: prebuild
-  image: node:15.14.0-buster
-  script:
-    - *build-env-linux
-    - *unit-test
-
-unit-test-mac:
-  stage: prebuild
-  script:
-    - *build-env-mac
-    - *unit-test
-  tags:
-    - mac-shell
-
-unit-test-windows:
-  stage: prebuild
-  image: eu.gcr.io/principal-oxide-204416/windows-build
-  script:
-    - *build-env-windows
-    - *unit-test
-  allow_failure: true
-  tags:
-    - windows-docker
 
 build-linux:
   stage: build
@@ -186,6 +152,7 @@ build-windows:
   artifacts:
     paths:
       - prebuilds
+  #allow_failure: true
   tags:
     - windows-docker
 
