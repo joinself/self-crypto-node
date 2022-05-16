@@ -118,8 +118,6 @@ license-compliance:
   script:
     - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
-    #- ${SCRIPTS_DIR}/git-setup
-    #- npm install
     - ${SCRIPTS_DIR}/license-check
   allow_failure: true
 
