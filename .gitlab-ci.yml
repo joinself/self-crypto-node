@@ -114,7 +114,7 @@ secret-scan:
 
 license-compliance:
   stage: build
-  image: licensefinder/license_finder
+  image: joinself/license-finder:node
   script:
     - export SCRIPTS_DIR=$(mktemp -d)
     - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
