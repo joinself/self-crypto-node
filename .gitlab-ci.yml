@@ -117,9 +117,8 @@ license-compliance:
   stage: build
   image: joinself/license-finder:node
   script:
-    - export SCRIPTS_DIR=$(mktemp -d)
-    - git clone -q --depth 1 "${SCRIPTS_REPO}" "${SCRIPTS_DIR}"
-    - ${SCRIPTS_DIR}/license-check
+    - npm install
+    - license_finder
   allow_failure: true
 
 build-linux:
