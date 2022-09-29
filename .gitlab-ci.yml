@@ -117,6 +117,7 @@ license-compliance:
   stage: build
   image: joinself/license-finder:node
   script:
+    - apt-get update && apt-get install make
     - npm install
     - license_finder
   allow_failure: true
