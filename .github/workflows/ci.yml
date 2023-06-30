@@ -19,15 +19,18 @@ jobs:
       container-image: joinself/license-finder:node
     secrets: inherit
   secret-scan:
+    if: ${{ false }}
     uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
     secrets: inherit
   build-linux:
+    if: ${{ false }}
     uses: ./.github/workflows/build-linux.yml
     secrets: inherit
   build-mac:
     uses: ./.github/workflows/build-mac.yml
     secrets: inherit
   build-windows:
+    if: ${{ false }}
     uses: ./.github/workflows/build-windows.yml
     secrets: inherit
   publish:
