@@ -1,0 +1,36 @@
+name: CI
+
+on: 
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  license-compliance:
+    uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
+    with:
+      container-image: joinself/license-finder:node
+    secrets: inherit
+  secret-scan:
+    uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
+    secrets: inherit
+  build-linux:
+    uses: ./.github/workflows/build-linux.yml
+    secrets: inherit
+  build-mac:
+    uses: ./.github/workflows/build-mac.yml
+    secrets: inherit
+  build-windows:
+    uses: ./.github/workflows/build-windows.yml
+    secrets: inherit
+  publish:
+    #if: ${{ github.ref == 'refs/heads/main' }}
+    needs: [license-compliance, secret-scan, build-linux, build-mac, build-windows]
+    uses: ./.github/workflows/publish.yml
+    secrets: inherit
