@@ -14,6 +14,8 @@ jobs:
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
 
+          export CC=aarch64-linux-gnu-gcc
+          export CXX=arrch64-linux-gnu-g++
           curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-aarch64-apple-darwin-0.5.0.tar.gz
           #curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-apple-darwin-0.5.0.tar.gz
           tar -zxvf self-omemo.tar.gz
@@ -22,7 +24,7 @@ jobs:
           mv self-omemo-aarch64-apple-darwin-0.5.0/*.a libraries
           yarn install
           yarn test
-          CC=aarch64-linux-gnu-g++ CXX=aarch64-linux-gnu-g++ yarn prebuild
+          CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ yarn prebuild
 
           # x86_64
           # curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-apple-darwin-0.5.0.tar.gz
