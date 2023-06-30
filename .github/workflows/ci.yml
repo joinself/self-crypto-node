@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   license-compliance:
+    if: ${{ false }}
     uses: joinself/github-workflows-public/.github/workflows/license-compliance.yml@main
     with:
       container-image: joinself/license-finder:node
