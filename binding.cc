@@ -2,9 +2,7 @@
 
 #include <node_api.h>
 #include <stdio.h>
-#include <sodium.h>
 #include <string.h>
-#include <self_olm/olm.h>
 #include <stdlib.h>
 
 // The compiler for some reason wants to treat self_omemo as a
@@ -17,21 +15,16 @@ extern "C" {
 namespace self_crypto {
 
     napi_value create_olm_account(napi_env env, napi_callback_info info) {
-        if (sodium_init() == -1) {
-            napi_throw_error(env, "ENOMEM", "Sodium not ready");
-            return NULL;
-        }
-
-        void * abuf = malloc(olm_account_size());
+        void * abuf = malloc(self_olm_account_size());
 
         if (abuf == NULL) {
             napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
             return NULL;
         }
 
-        OlmAccount * account = olm_account(abuf);
+        OlmAccount * account = self_olm_account(abuf);
 
-        size_t rand_len = olm_create_account_random_length(account);
+        size_t rand_len = self_olm_create_account_random_length(account);
 
         void * rand = malloc(rand_len);
 
@@ -40,14 +33,9 @@ namespace self_crypto {
             return NULL;
         }
 
-        if (sodium_init() == -1) {
-            napi_throw_error(env, "ERROR", "Sodium not ready");
-            return NULL;
-        }
+        self_randombytes_buf(rand, rand_len);
 
-        randombytes_buf(rand, rand_len);
-
-        if (olm_create_account(account, rand, rand_len) != 0) {
+        if (self_olm_create_account(account, rand, rand_len) != 0) {
             napi_throw_error(env, "ERROR", "Could not create olm account");
             return NULL;
         }
@@ -76,54 +64,53 @@ namespace self_crypto {
             return NULL;
         }
 
-        if (sodium_init() == -1) {
-            napi_throw_error(env, "ENOMEM", "Sodium not ready");
-            return NULL;
-        }
-
         uint8_t * seed;
         char * encoded_seed;
         size_t seed_len = 0;
         size_t encoded_seed_len = 0;
 
-        void * abuf = malloc(olm_account_size());
+        void * abuf = malloc(self_olm_account_size());
 
         if (abuf == NULL) {
             napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
             return NULL;
         }
 
-        OlmAccount * account = olm_account(abuf);
+        OlmAccount * account = self_olm_account(abuf);
 
         // get the encoded seed
         napi_status status = napi_get_value_string_utf8(env, argv[0], NULL, 0, & encoded_seed_len);
         if (status != napi_ok) {
+            free(abuf);
             napi_throw_error(env, "ERROR", "Invalid encoded seed size");
             return NULL;
         }
 
         encoded_seed = (char * ) malloc(encoded_seed_len + 1);
         if (encoded_seed == NULL) {
+            free(abuf);
             napi_throw_error(env, "ERROR", "Could not allocate encoded seed buffer");
             return NULL;
         }
 
         status = napi_get_value_string_utf8(env, argv[0], encoded_seed, encoded_seed_len + 1, NULL);
         if (status != napi_ok) {
+            free(abuf);
             napi_throw_error(env, "ERROR", "Invalid encoded seed");
             return NULL;
         }
 
         // allocate memory for the decoded seed
-        seed_len = crypto_sign_publickeybytes();
+        seed_len = self_crypto_sign_publickeybytes();
 
         seed = (uint8_t * ) malloc(seed_len + 1);
         if (seed == NULL) {
+            free(abuf);
             napi_throw_error(env, "ERROR", "Could not allocate seed buffer");
             return NULL;
         }
 
-        size_t success = sodium_base642bin(
+        size_t success = self_base642bin(
             seed,
             seed_len,
             encoded_seed,
@@ -131,7 +118,7 @@ namespace self_crypto {
             NULL, &
             seed_len,
             NULL,
-            sodium_base64_VARIANT_ORIGINAL_NO_PADDING
+            self_base64_VARIANT_ORIGINAL_NO_PADDING
         );
 
         free(encoded_seed);
@@ -142,13 +129,85 @@ namespace self_crypto {
             return NULL;
         }
 
-        olm_create_account_derrived_keys(
-            account,
-            seed,
-            seed_len
+        uint8_t *ed25519_pk = (uint8_t *)(malloc(self_crypto_sign_publickeybytes()));
+        uint8_t *ed25519_sk = (uint8_t *)(malloc(self_crypto_sign_secretkeybytes()));
+        uint8_t *curve25519_pk = (uint8_t *)(malloc(self_crypto_sign_publickeybytes())); // equivalent to crypto_scalarmult_curve25519_BYTES
+        uint8_t *curve25519_sk = (uint8_t *)(malloc(self_crypto_sign_publickeybytes())); // equivalent to crypto_scalarmult_curve25519_BYTES
+
+        success = self_crypto_sign_seed_keypair(
+            ed25519_pk,
+            ed25519_sk,
+            seed
         );
 
+        if (success != 0) {
+            free(abuf);
+            free(seed);
+            free(ed25519_pk);
+            free(ed25519_sk);
+            free(curve25519_pk);
+            free(curve25519_sk);
+            napi_throw_error(env, "ERROR", "Could not create keypair from seed");
+            return NULL;
+        }
+
+        success = self_crypto_sign_ed25519_pk_to_curve25519(
+            curve25519_pk,
+            ed25519_pk
+        );
+
+        if (success != 0) {
+            free(abuf);
+            free(seed);
+            free(ed25519_pk);
+            free(ed25519_sk);
+            free(curve25519_pk);
+            free(curve25519_sk);
+            napi_throw_error(env, "ERROR", "Could not convert ed25519 public key to curve25519");
+            return NULL;
+        }
+
+
+        success = self_crypto_sign_ed25519_sk_to_curve25519(
+            curve25519_sk,
+            ed25519_sk
+        );
+
+        if (success != 0) {
+            free(abuf);
+            free(seed);
+            free(ed25519_pk);
+            free(ed25519_sk);
+            free(curve25519_pk);
+            free(curve25519_sk);
+            napi_throw_error(env, "ERROR", "Could not convert ed25519 secret key to curve25519");
+            return NULL;
+        }
+
+        success = self_olm_import_account(
+            account,
+            ed25519_sk,
+            ed25519_pk,
+            curve25519_sk,
+            curve25519_pk
+        );
+
+        if (success == -1) {
+            free(abuf);
+            free(seed);
+            free(ed25519_pk);
+            free(ed25519_sk);
+            free(curve25519_pk);
+            free(curve25519_sk);
+            napi_throw_error(env, "ERROR", "Could not import olm account");
+            return NULL;
+        }
+
         free(seed);
+        free(ed25519_pk);
+        free(ed25519_sk);
+        free(curve25519_pk);
+        free(curve25519_sk);
 
         napi_value aref;
 
@@ -208,7 +267,7 @@ namespace self_crypto {
             }
         }
 
-        size_t pickle_len = olm_pickle_account_length(account);
+        size_t pickle_len = self_olm_pickle_account_length(account);
 
         pickle = (char * ) malloc(pickle_len);
         if (pickle == NULL) {
@@ -216,7 +275,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        olm_pickle_account(
+        self_olm_pickle_account(
             account,
             password,
             password_len,
@@ -224,7 +283,7 @@ namespace self_crypto {
             pickle_len
         );
 
-        if (password != NULL) {
+        if (password_len > 0 && password != NULL) {
             free(password);
         }
 
@@ -296,16 +355,16 @@ namespace self_crypto {
             }
         }
 
-        void * abuf = malloc(olm_account_size());
+        void * abuf = malloc(self_olm_account_size());
 
         if (abuf == NULL) {
             napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
             return NULL;
         }
 
-        OlmAccount * account = olm_account(abuf);
+        OlmAccount * account = self_olm_account(abuf);
 
-        olm_unpickle_account(
+        self_olm_unpickle_account(
             account,
             password,
             password_len,
@@ -313,7 +372,7 @@ namespace self_crypto {
             pickle_len
         );
 
-        if (password != NULL) {
+        if (password_len > 0 && password != NULL) {
             free(password);
         }
 
@@ -358,7 +417,7 @@ namespace self_crypto {
 
         OlmAccount * account = (OlmAccount * )(aref);
 
-        size_t rand_len = olm_account_generate_one_time_keys_random_length(account, num_keys);
+        size_t rand_len = self_olm_account_generate_one_time_keys_random_length(account, num_keys);
 
         void * rand = malloc(rand_len);
 
@@ -367,19 +426,14 @@ namespace self_crypto {
             return NULL;
         }
 
-        if (sodium_init() == -1) {
-            napi_throw_error(env, "ERROR", "Sodium not ready");
-            return NULL;
-        }
+        self_randombytes_buf(rand, rand_len);
 
-        randombytes_buf(rand, rand_len);
-
-        size_t ret = olm_account_generate_one_time_keys(account, num_keys, rand, rand_len);
+        size_t ret = self_olm_account_generate_one_time_keys(account, num_keys, rand, rand_len);
 
         free(rand);
 
         if (ret != (size_t)(num_keys)) {
-            napi_throw_error(env, "ERROR", olm_account_last_error(account));
+            napi_throw_error(env, "ERROR", self_olm_account_last_error(account));
             return NULL;
         }
 
@@ -408,7 +462,7 @@ namespace self_crypto {
 
         OlmAccount * account = (OlmAccount * )(aref);
 
-        size_t klen = olm_account_one_time_keys_length(account);
+        size_t klen = self_olm_account_one_time_keys_length(account);
 
         void * keys = malloc(klen);
 
@@ -417,10 +471,10 @@ namespace self_crypto {
             return NULL;
         }
 
-        klen = olm_account_one_time_keys(account, keys, klen);
+        klen = self_olm_account_one_time_keys(account, keys, klen);
 
         if (klen < 1) {
-            napi_throw_error(env, "ERROR", olm_account_last_error(account));
+            napi_throw_error(env, "ERROR", self_olm_account_last_error(account));
             return NULL;
         }
 
@@ -458,7 +512,7 @@ namespace self_crypto {
 
         OlmAccount * account = (OlmAccount * )(aref);
 
-        size_t klen = olm_account_identity_keys_length(account);
+        size_t klen = self_olm_account_identity_keys_length(account);
 
         void * keys = malloc(klen);
 
@@ -467,10 +521,10 @@ namespace self_crypto {
             return NULL;
         }
 
-        klen = olm_account_identity_keys(account, keys, klen);
+        klen = self_olm_account_identity_keys(account, keys, klen);
 
         if (klen < 1) {
-            napi_throw_error(env, "ERROR", olm_account_last_error(account));
+            napi_throw_error(env, "ERROR", self_olm_account_last_error(account));
             return NULL;
         }
 
@@ -517,9 +571,9 @@ namespace self_crypto {
 
         OlmSession * session = (OlmSession * )(sref);
 
-        olm_remove_one_time_keys(account, session);
+        self_olm_remove_one_time_keys(account, session);
 
-        const char * err = olm_account_last_error(account);
+        const char * err = self_olm_account_last_error(account);
         if (strcmp(err, "SUCCESS") != 0) {
             napi_throw_error(env, "ERROR", err);
             return NULL;
@@ -592,16 +646,16 @@ namespace self_crypto {
         }
 
         // allocate the session
-        void * sbuf = malloc(olm_session_size());
+        void * sbuf = malloc(self_olm_session_size());
         if (sbuf == NULL) {
             napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
             return NULL;
         }
 
-        OlmSession * session = olm_session(sbuf);
+        OlmSession * session = self_olm_session(sbuf);
 
         // generate some random data
-        size_t rand_len = olm_create_outbound_session_random_length(session);
+        size_t rand_len = self_olm_create_outbound_session_random_length(session);
 
         void * rand = malloc(rand_len);
         if (rand == NULL) {
@@ -609,17 +663,9 @@ namespace self_crypto {
             return NULL;
         }
 
-        if (sodium_init() == -1) {
-            free(rand);
-            free(identity_key);
-            free(one_time_key);
-            napi_throw_error(env, "ERROR", "Sodium not ready");
-            return NULL;
-        }
+        self_randombytes_buf(rand, rand_len);
 
-        randombytes_buf(rand, rand_len);
-
-        olm_create_outbound_session(
+        self_olm_create_outbound_session(
             session,
             account,
             identity_key,
@@ -634,7 +680,7 @@ namespace self_crypto {
         free(identity_key);
         free(one_time_key);
 
-        const char * serr = olm_session_last_error(session);
+        const char * serr = self_olm_session_last_error(session);
         if (strcmp(serr, "SUCCESS") != 0) {
             napi_throw_error(env, "ERROR", serr);
             return NULL;
@@ -695,22 +741,22 @@ namespace self_crypto {
         }
 
         // allocate the session
-        void * sbuf = malloc(olm_session_size());
+        void * sbuf = malloc(self_olm_session_size());
         if (sbuf == NULL) {
             napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
             return NULL;
         }
 
-        OlmSession * session = olm_session(sbuf);
+        OlmSession * session = self_olm_session(sbuf);
 
-        olm_create_inbound_session(
+        self_olm_create_inbound_session(
             session,
             account,
             ciphertext,
             ciphertext_len
         );
 
-        const char * serr = olm_session_last_error(session);
+        const char * serr = self_olm_session_last_error(session);
         if (strcmp(serr, "SUCCESS") != 0) {
             napi_throw_error(env, "ERROR", serr);
             return NULL;
@@ -774,13 +820,13 @@ namespace self_crypto {
 
 
         // check if the session matches the one time key message
-        matches = olm_matches_inbound_session(
+        matches = self_olm_matches_inbound_session(
             session,
             ciphertext,
             ciphertext_len
         );
 
-        const char * serr = olm_session_last_error(session);
+        const char * serr = self_olm_session_last_error(session);
         if (strcmp(serr, "SUCCESS") != 0) {
             napi_throw_error(env, "ERROR", serr);
             return NULL;
@@ -842,7 +888,7 @@ namespace self_crypto {
             }
         }
 
-        size_t pickle_len = olm_pickle_session_length(session);
+        size_t pickle_len = self_olm_pickle_session_length(session);
 
         pickle = (char * ) malloc(pickle_len);
         if (pickle == NULL) {
@@ -850,7 +896,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        olm_pickle_session(
+        self_olm_pickle_session(
             session,
             password,
             password_len,
@@ -858,7 +904,7 @@ namespace self_crypto {
             pickle_len
         );
 
-        if (password != NULL) {
+        if (password_len > 0 && password != NULL) {
             free(password);
         }
 
@@ -930,16 +976,16 @@ namespace self_crypto {
             }
         }
 
-        void * sbuf = malloc(olm_session_size());
+        void * sbuf = malloc(self_olm_session_size());
 
         if (sbuf == NULL) {
             napi_throw_error(env, "ENOMEM", "Could not allocate account memory");
             return NULL;
         }
 
-        OlmSession * session = olm_session(sbuf);
+        OlmSession * session = self_olm_session(sbuf);
 
-        olm_unpickle_session(
+        self_olm_unpickle_session(
             session,
             password,
             password_len,
@@ -947,7 +993,7 @@ namespace self_crypto {
             pickle_len
         );
 
-        if (password != NULL) {
+        if (password_len > 0 && password != NULL) {
             free(password);
         }
 
@@ -962,229 +1008,6 @@ namespace self_crypto {
         }
 
         return aref;
-    }
-
-    napi_value encrypt(napi_env env, napi_callback_info info) {
-        napi_value result;
-        napi_value argv[2];
-        size_t argc = 2;
-
-        napi_get_cb_info(env, info, & argc, argv, NULL, NULL);
-
-        if (argc < 2) {
-            napi_throw_error(env, "EINVAL", "Too few arguments");
-            return NULL;
-        }
-
-        void * sref;
-        char * plaintext;
-        size_t plaintext_len = 0;
-
-        napi_status status = napi_get_value_external(env, argv[0], & sref);
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid olm session");
-            return NULL;
-        }
-
-        OlmSession * session = (OlmSession * )(sref);
-
-        // get the size of the identity and one time keys
-        status = napi_get_value_string_utf8(env, argv[1], NULL, 0, & plaintext_len);
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid plaintext size");
-            return NULL;
-        }
-
-        // get the plaintext
-        plaintext = (char * ) malloc(plaintext_len + 1);
-        if (plaintext == NULL) {
-            napi_throw_error(env, "ERROR", "Could not allocate plaintext buffer");
-            return NULL;
-        }
-
-        status = napi_get_value_string_utf8(env, argv[1], plaintext, plaintext_len + 1, & plaintext_len);
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid plaintext");
-            return NULL;
-        }
-
-        size_t rand_len = olm_encrypt_random_length(session);
-        size_t ciphertext_len = olm_encrypt_message_length(
-            session,
-            plaintext_len
-        );
-
-        const char * serr = olm_session_last_error(session);
-        if (strcmp(serr, "SUCCESS") != 0) {
-            napi_throw_error(env, "ERROR", serr);
-            return NULL;
-        }
-
-        void * ciphertext = malloc(ciphertext_len);
-        if (ciphertext == NULL) {
-            napi_throw_error(env, "ERROR", "Could not allocate ciphertext buffer");
-            return NULL;
-        }
-
-        // generate some random data
-        void * rand = malloc(rand_len);
-        if (rand == NULL) {
-            napi_throw_error(env, "ENOMEM", "Could not allocate ciphertext random memory");
-            return NULL;
-        }
-
-        if (sodium_init() == -1) {
-            napi_throw_error(env, "ERROR", "Sodium not ready");
-            return NULL;
-        }
-
-        randombytes_buf(rand, rand_len);
-
-        olm_encrypt(
-            session,
-            plaintext,
-            plaintext_len,
-            rand,
-            rand_len,
-            ciphertext,
-            ciphertext_len
-        );
-
-        free(plaintext);
-        free(rand);
-
-        serr = olm_session_last_error(session);
-        if (strcmp(serr, "SUCCESS") != 0) {
-            free(ciphertext);
-            napi_throw_error(env, "ERROR", serr);
-            return NULL;
-        }
-
-        status = napi_create_string_utf8(env, (const char * )(ciphertext), ciphertext_len, & result);
-
-        free(ciphertext);
-
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid olm account keys");
-            return NULL;
-        }
-
-        return result;
-    }
-
-    napi_value decrypt(napi_env env, napi_callback_info info) {
-        napi_value result;
-        napi_value argv[3];
-        size_t argc = 3;
-
-        napi_get_cb_info(env, info, & argc, argv, NULL, NULL);
-
-        if (argc < 3) {
-            napi_throw_error(env, "EINVAL", "Too few arguments");
-            return NULL;
-        }
-
-        void * sref;
-        char * ciphertext;
-        char * ciphertext_copy;
-        size_t ciphertext_len = 0;
-        int32_t message_type = 0;
-
-        napi_status status = napi_get_value_external(env, argv[0], & sref);
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid olm session");
-            return NULL;
-        }
-
-        OlmSession * session = (OlmSession * )(sref);
-
-        // get the size of the ciphertext
-        status = napi_get_value_string_utf8(env, argv[1], NULL, 0, & ciphertext_len);
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid ciphertext size");
-            return NULL;
-        }
-
-        // get the ciphertext
-        ciphertext = (char * ) malloc(ciphertext_len + 1);
-        if (ciphertext == NULL) {
-            napi_throw_error(env, "ERROR", "Could not allocate ciphertext buffer");
-            return NULL;
-        }
-
-        ciphertext_copy = (char * ) malloc(ciphertext_len + 1);
-        if (ciphertext_copy == NULL) {
-            free(ciphertext);
-            napi_throw_error(env, "ERROR", "Could not allocate ciphertext Copy buffer");
-            return NULL;
-        }
-
-        status = napi_get_value_string_utf8(env, argv[1], ciphertext, ciphertext_len + 1, & ciphertext_len);
-        if (status != napi_ok) {
-            free(ciphertext);
-            free(ciphertext_copy);
-            napi_throw_error(env, "ERROR", "Invalid ciphertext");
-            return NULL;
-        }
-
-        strcpy(ciphertext_copy, ciphertext);
-
-        // get the message type
-        status = napi_get_value_int32(env, argv[2], & message_type);
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid Message Type Argument");
-            return NULL;
-        }
-
-        size_t plaintext_len = olm_decrypt_max_plaintext_length(
-            session,
-            message_type,
-            ciphertext_copy,
-            ciphertext_len
-        );
-
-        const char * serr = olm_session_last_error(session);
-        if (strcmp(serr, "SUCCESS") != 0) {
-            free(ciphertext);
-            free(ciphertext_copy);
-            napi_throw_error(env, "ERROR", serr);
-            return NULL;
-        }
-
-        void * plaintext = malloc(plaintext_len);
-        if (plaintext == NULL) {
-            napi_throw_error(env, "ERROR", "Could not allocate plaintext buffer");
-            return NULL;
-        }
-
-        plaintext_len = olm_decrypt(
-            session,
-            message_type,
-            ciphertext,
-            ciphertext_len,
-            plaintext,
-            plaintext_len
-        );
-
-        free(ciphertext);
-
-        serr = olm_session_last_error(session);
-        if (strcmp(serr, "SUCCESS") != 0) {
-            free(plaintext);
-            napi_throw_error(env, "ERROR", serr);
-            return NULL;
-        }
-
-        status = napi_create_string_utf8(env, (const char * )(plaintext), plaintext_len, & result);
-
-        free(plaintext);
-
-        if (status != napi_ok) {
-            napi_throw_error(env, "ERROR", "Invalid plaintext");
-            return NULL;
-        }
-
-        return result;
     }
 
     napi_value create_group_session(napi_env env, napi_callback_info info) {
@@ -1220,8 +1043,8 @@ namespace self_crypto {
             return NULL;
         }
 
-        GroupSession * group_session = omemo_create_group_session();
-        omemo_set_identity(group_session, identity);
+        GroupSession * group_session = self_omemo_create_group_session();
+        self_omemo_set_identity(group_session, identity);
 
         napi_value sref;
 
@@ -1257,7 +1080,7 @@ namespace self_crypto {
 
         GroupSession * group_session = (GroupSession * )(gsref);
 
-        omemo_destroy_group_session(group_session);
+        self_omemo_destroy_group_session(group_session);
 
         return result;
     }
@@ -1316,7 +1139,7 @@ namespace self_crypto {
 
         OlmSession * session = (OlmSession * )(sref);
 
-        omemo_add_group_participant(group_session, identity, session);
+        self_omemo_add_group_participant(group_session, identity, session);
 
         return result;
     }
@@ -1365,7 +1188,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        size_t ciphertext_len = omemo_encrypted_size(group_session, plaintext_len);
+        size_t ciphertext_len = self_omemo_encrypted_size(group_session, plaintext_len);
 
         uint8_t * ciphertext = (uint8_t * ) malloc(ciphertext_len);
         if (ciphertext == NULL) {
@@ -1373,7 +1196,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        ciphertext_len = omemo_encrypt(
+        ciphertext_len = self_omemo_encrypt(
             group_session,
             plaintext,
             plaintext_len,
@@ -1466,7 +1289,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        size_t plaintext_len = omemo_decrypted_size(group_session, ciphertext, ciphertext_len);
+        size_t plaintext_len = self_omemo_decrypted_size(group_session, ciphertext, ciphertext_len);
 
         uint8_t * plaintext = (uint8_t * ) malloc(plaintext_len);
         if (plaintext == NULL) {
@@ -1474,7 +1297,7 @@ namespace self_crypto {
             return NULL;
         }
 
-        plaintext_len = omemo_decrypt(
+        plaintext_len = self_omemo_decrypt(
             group_session,
             sender,
             plaintext,
@@ -1540,14 +1363,14 @@ namespace self_crypto {
         }
 
         // decode the ed25519 pk
-        size_t ed25519_pk_len = crypto_sign_publickeybytes();
+        size_t ed25519_pk_len = self_crypto_sign_publickeybytes();
 
         if ((ed25519_pk = (uint8_t * ) malloc(ed25519_pk_len)) == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate ed25519 public key");
             return NULL;
         }
 
-        size_t success = sodium_base642bin(
+        size_t success = self_base642bin(
             ed25519_pk,
             ed25519_pk_len,
             encoded_ed25519_pk,
@@ -1555,7 +1378,7 @@ namespace self_crypto {
             NULL, &
             ed25519_pk_len,
             NULL,
-            sodium_base64_VARIANT_URLSAFE_NO_PADDING
+            self_base64_VARIANT_URLSAFE_NO_PADDING
         );
 
         free(encoded_ed25519_pk);
@@ -1570,14 +1393,14 @@ namespace self_crypto {
         char * encoded_curve25519_pk;
         size_t encoded_curve25519_pk_len;
 
-        size_t curve25519_pk_len = crypto_sign_publickeybytes();
+        size_t curve25519_pk_len = self_crypto_sign_publickeybytes();
 
         if ((curve25519_pk = (uint8_t * ) malloc(curve25519_pk_len)) == NULL) {
             napi_throw_error(env, "ERROR", "Could not allocate curve25519 public key");
             return NULL;
         }
 
-        success = crypto_sign_ed25519_pk_to_curve25519(
+        success = self_crypto_sign_ed25519_pk_to_curve25519(
             curve25519_pk,
             ed25519_pk
         );
@@ -1590,9 +1413,9 @@ namespace self_crypto {
             return NULL;
         }
 
-        encoded_curve25519_pk_len = sodium_base64_ENCODED_LEN(
+        encoded_curve25519_pk_len = self_base64_ENCODED_LEN(
             curve25519_pk_len,
-            sodium_base64_VARIANT_ORIGINAL_NO_PADDING
+            self_base64_VARIANT_ORIGINAL_NO_PADDING
         );
 
         if ((encoded_curve25519_pk = (char * ) malloc(encoded_curve25519_pk_len)) == NULL) {
@@ -1601,12 +1424,12 @@ namespace self_crypto {
             return NULL;
         }
 
-        sodium_bin2base64(
+        self_bin2base64(
             encoded_curve25519_pk,
             encoded_curve25519_pk_len,
             curve25519_pk,
             curve25519_pk_len,
-            sodium_base64_VARIANT_ORIGINAL_NO_PADDING
+            self_base64_VARIANT_ORIGINAL_NO_PADDING
         );
 
         free(curve25519_pk);
@@ -1684,12 +1507,6 @@ namespace self_crypto {
 
         napi_create_function(env, NULL, 0, unpickle_session, NULL, & unpickle_session_fn);
         napi_set_named_property(env, exports, "unpickle_session", unpickle_session_fn);
-
-        napi_create_function(env, NULL, 0, encrypt, NULL, & encrypt_fn);
-        napi_set_named_property(env, exports, "encrypt", encrypt_fn);
-
-        napi_create_function(env, NULL, 0, decrypt, NULL, & decrypt_fn);
-        napi_set_named_property(env, exports, "decrypt", decrypt_fn);
 
         napi_create_function(env, NULL, 0, create_group_session, NULL, & create_group_session_fn);
         napi_set_named_property(env, exports, "create_group_session", create_group_session_fn);

@@ -17,38 +17,12 @@
           "OS=='linux'",
           {
             "libraries": [
-              "-L<(module_root_dir)/libraries/ -l:libsodium.so",
-              "-L<(module_root_dir)/libraries/ -l:libself_olm.so",
-              "-L<(module_root_dir)/libraries/ -l:libself_omemo.so",
+              "-L<(module_root_dir)/libraries/ -l:libself_omemo.a",
             ],
             "copies": [
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libsodium.so" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libsodium.so.23" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libsodium.so.23.2.0" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_olm.so" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_olm.so.3" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_olm.so.3.1.4" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_omemo.so" ]
+                "files": [ "<(module_root_dir)/libraries/libself_omemo.a" ]
               }
             ],
             "link_settings": {
@@ -64,34 +38,12 @@
           "OS=='mac'",
           {
             "libraries": [
-              "-L<(module_root_dir)/libraries/ -lsodium",
-              "-L<(module_root_dir)/libraries/ -lself_olm",
               "-L<(module_root_dir)/libraries/ -lself_omemo",
             ],
             "copies": [
               {
                 "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libsodium.dylib" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libsodium.23.dylib" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_olm.dylib" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_olm.3.dylib" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_olm.3.1.4.dylib" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libself_omemo.dylib" ]
+                "files": [ "<(module_root_dir)/libraries/libself_omemo.a" ]
               }
             ],
             "link_settings": {
@@ -105,20 +57,10 @@
           "OS=='win'",
           {
             "libraries": [
-              "-l<(module_root_dir)/libraries/sodium.lib",
-              "-l<(module_root_dir)/libraries/self_olm.lib",
               "-l<(module_root_dir)/libraries/self_omemo.lib",
               "-lmincore.lib"
             ],
             "copies": [
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/libsodium.dll" ]
-              },
-              {
-                "destination": "<(module_root_dir)/build/Release/",
-                "files": [ "<(module_root_dir)/libraries/self_olm.dll" ]
-              },
               {
                 "destination": "<(module_root_dir)/build/Release/",
                 "files": [ "<(module_root_dir)/libraries/self_omemo.lib" ]
