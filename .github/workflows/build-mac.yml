@@ -13,48 +13,14 @@ jobs:
         shell: bash
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
-
-          export CC=aarch64-linux-gnu-gcc
-          export CXX=arrch64-linux-gnu-g++
-          curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-aarch64-apple-darwin-0.5.0.tar.gz
-          #curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-apple-darwin-0.5.0.tar.gz
+          curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-apple-darwin-0.5.0.tar.gz
           tar -zxvf self-omemo.tar.gz
           mkdir libraries includes
-          mv self-omemo-aarch64-apple-darwin-0.5.0/*.h includes
-          mv self-omemo-aarch64-apple-darwin-0.5.0/*.a libraries
+          mv self-omemo-x86_64-apple-darwin-0.5.0/*.h includes
+          mv self-omemo-x86_64-apple-darwin-0.5.0/*.a libraries
           yarn install
           yarn test
-          CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ yarn prebuild
-
-          # x86_64
-          # curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-apple-darwin-0.5.0.tar.gz
-          # tar -zxvf self-omemo.tar.gz
-          # mkdir libraries includes
-          # mv self-omemo-x86_64-apple-darwin-0.5.0/*.h includes
-          # mv self-omemo-x86_64-apple-darwin-0.5.0/*.a libraries
-          # yarn install
-          # yarn test
-          # yarn prebuild
-
-          # export NVM_DIR="$HOME/.nvm"
-          # . $(brew --prefix)/opt/nvm/nvm.sh
-          # mkdir libraries
-          # cp /usr/local/Cellar/libself-olm/0.1.28/lib/libself_olm.* libraries
-          # cp /usr/local/Cellar/libself-omemo/0.1.2/lib/libself_omemo.* libraries
-          # cp /usr/local/Cellar/libsodium/1.0.18_1/lib/libsodium.* libraries
-          # chmod 755 libraries/*.dylib
-          # chmod 755 libraries/*.a
-
-
-          # curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-unknown-linux-gnu-0.5.0.tar.gz
-          # tar -zxvf self-omemo.tar.gz
-          # mkdir libraries includes
-          # mv self-omemo-x86_64-unknown-linux-gnu-0.5.0/*.h includes
-          # mv self-omemo-x86_64-unknown-linux-gnu-0.5.0/*.a libraries
-          # yarn install
-          # yarn test
-          # yarn prebuild
-
+          yarn prebuild
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
