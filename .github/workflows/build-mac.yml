@@ -1,0 +1,34 @@
+name: _build-mac
+
+on: 
+  workflow_call:
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Setup job
+        uses: joinself/github-actions-public/setup-job@main
+      - name: Build
+        shell: bash
+        run: |
+          . ${GITHUB_WORKSPACE}/.ci/env
+          curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-apple-darwin-0.5.0.tar.gz
+          tar -zxvf self-omemo.tar.gz
+          mkdir libraries includes
+          mv self-omemo-x86_64-apple-darwin-0.5.0/*.h includes
+          mv self-omemo-x86_64-apple-darwin-0.5.0/*.a libraries
+          yarn install
+          yarn test
+          yarn prebuild
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: prebuilds
+          retention-days: 1
+      - name: Failure notification
+        if: ${{ github.ref == 'refs/heads/main' && failure() }}
+        uses: joinself/github-actions-public/failure-notification@main
+        with:
+          slack-webhook: ${{ secrets.SLACK_WEBHOOK_CI_ALERTS }}

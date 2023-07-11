@@ -23,7 +23,7 @@
     "dev": "node-gyp rebuild",
     "install": "node-gyp-build",
     "test": "standard && tape tests/*.js",
-    "prebuild": "prebuildify --napi --strip --electron-compat"
+    "prebuild": "prebuildify --napi --strip"
   },
   "repository": {
     "type": "git",
