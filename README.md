@@ -1,4 +1,6 @@
-# self-crypto-node
+# Self Crypto Node
+
+## Usage
 
 Install:
 
