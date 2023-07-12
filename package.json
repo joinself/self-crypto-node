@@ -1,6 +1,6 @@
 {
   "name": "self-crypto",
-  "version": "1.0.30",
+  "version": "1.0.31",
   "description": "A package for end to end encryption on the self network",
   "license": "MIT",
   "main": "index.js",
