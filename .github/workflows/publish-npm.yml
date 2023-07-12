@@ -1,4 +1,4 @@
-name: Publish npm
+name: _publish
 
 on:
   workflow_call:
