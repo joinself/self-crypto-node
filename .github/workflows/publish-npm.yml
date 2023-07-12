@@ -24,6 +24,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: artifacts
+          path: prebuilds
       - name: Publish
         shell: bash
         env:
