@@ -38,6 +38,11 @@ jobs:
           version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
           branch=$(git branch --show-current)
           current_git_tag=$(git tag --merged ${branch} | sort -V | tail -n 1)
+
+          pwd
+          ls -lah
+          ls -lah prebuilds
+
           if [[ "${version}" != "${current_git_tag}" ]]; then
             git tag -a ${version} -m "${version}"
             git push origin ${version}
@@ -49,11 +54,6 @@ jobs:
               release_notes="${body}"
             fi
             gh release create "${version}" --notes "${release_notes}"
-
-            pwd
-            ls -lah
-            ls -lah prebuilds
-
             npm config set '//registry.npmjs.org/:_authToken=${NPM_TOKEN}'
             npm publish --access public
             slack-release-notification -v ${version}
