@@ -30,7 +30,8 @@ jobs:
     uses: ./.github/workflows/build-mac.yml
     secrets: inherit
   publish:
-    if: ${{ github.ref == 'refs/heads/main' }}
+    #if: ${{ github.ref == 'refs/heads/main' }}
     needs: [build-linux, build-mac]
-    uses: joinself/github-workflows-public/.github/workflows/publish-npm.yml@main
+    uses: ./.github/workflows/publish-npm.yml
+    #uses: joinself/github-workflows-public/.github/workflows/publish-npm.yml@main
     secrets: inherit
