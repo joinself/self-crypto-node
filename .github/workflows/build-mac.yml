@@ -13,6 +13,7 @@ jobs:
         shell: bash
         run: |
           . ${GITHUB_WORKSPACE}/.ci/env
+
           curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-x86_64-apple-darwin-0.5.0.tar.gz
           tar -zxvf self-omemo.tar.gz
           mkdir libraries includes
@@ -21,6 +22,13 @@ jobs:
           yarn install
           yarn test
           yarn prebuild
+
+          curl -Lo self-omemo.tar.gz https://github.com/joinself/self-omemo/releases/download/0.5.0/self-omemo-aarch64-apple-darwin-0.5.0.tar.gz
+          tar -zxvf self-omemo.tar.gz
+          rm -rf libraries/* includes/*
+          mv self-omemo-aarch64-apple-darwin-0.5.0/*.h includes
+          mv self-omemo-aarch64-apple-darwin-0.5.0/*.a libraries
+          yarn prebuild-arm64
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
