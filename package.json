@@ -23,7 +23,8 @@
     "dev": "node-gyp rebuild",
     "install": "node-gyp-build",
     "test": "standard && tape tests/*.js",
-    "prebuild": "prebuildify --napi --strip"
+    "prebuild": "prebuildify --napi --strip",
+    "prebuild-arm64": "prebuildify --arch arm64 --napi --strip"
   },
   "repository": {
     "type": "git",
