@@ -39,11 +39,6 @@ jobs:
           version=$(grep '"version":' package.json | awk '{print $2}' | tr -d '",')
           branch=$(git branch --show-current)
           current_git_tag=$(git tag --merged ${branch} | sort -V | tail -n 1)
-
-          pwd
-          ls -lah
-          ls -lah prebuilds
-
           if [[ "${version}" != "${current_git_tag}" ]]; then
             git tag -a ${version} -m "${version}"
             git push origin ${version}
