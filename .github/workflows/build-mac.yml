@@ -30,9 +30,9 @@ jobs:
           mv self-omemo-aarch64-apple-darwin-0.5.0/*.a libraries
           yarn prebuild-arm64
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: build-mac-artifacts
           path: prebuilds
           retention-days: 1
       - name: Failure notification
