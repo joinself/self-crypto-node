@@ -32,7 +32,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: build-mac-artifacts
           path: prebuilds
           retention-days: 1
       - name: Failure notification
