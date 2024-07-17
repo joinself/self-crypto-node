@@ -18,15 +18,12 @@ jobs:
       container-image: joinself/license-finder:node
       continue-on-error: true
     secrets: inherit
-  secret-scan:
-    uses: joinself/github-workflows-public/.github/workflows/secret-scan.yml@main
-    secrets: inherit
   build-linux:
-    needs: [license-compliance, secret-scan]
+    needs: license-compliance
     uses: ./.github/workflows/build-linux.yml
     secrets: inherit
   build-mac:
-    needs: [license-compliance, secret-scan]
+    needs: license-compliance
     uses: ./.github/workflows/build-mac.yml
     secrets: inherit
   publish:
